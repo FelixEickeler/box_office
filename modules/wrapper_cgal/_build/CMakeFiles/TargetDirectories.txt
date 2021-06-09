@@ -1,0 +1,5 @@
+/home/boxy/BoxOffice/modules/wrapper_cgal/_build/CMakeFiles/rebuild_cache.dir
+/home/boxy/BoxOffice/modules/wrapper_cgal/_build/CMakeFiles/edit_cache.dir
+/home/boxy/BoxOffice/modules/wrapper_cgal/_build/CMakeFiles/mvbb.dir
+/home/boxy/BoxOffice/modules/wrapper_cgal/pybin_bin/CMakeFiles/rebuild_cache.dir
+/home/boxy/BoxOffice/modules/wrapper_cgal/pybin_bin/CMakeFiles/edit_cache.dir

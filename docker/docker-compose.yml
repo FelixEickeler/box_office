@@ -1,0 +1,19 @@
+version: "2.3"
+services:
+  box-office:
+    build:
+      context: .
+      dockerfile: boxoffice.Dockerfile
+    container_name: box_office
+    stdin_open: true # docker run -i
+    #tty: true        # docker run -t
+    #user: phaethon
+    shm_size: "32gb"
+    volumes:
+        - ../:/home/boxy/BoxOffice
+    ports:
+        - "2242:22"
+    environment:
+        - LOCAL_UID=${UUID}
+        - LOCAL_GID=${GID}
+    entrypoint: /usr/local/bin/boxoffice-entrypoint.sh
