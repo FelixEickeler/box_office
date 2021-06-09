@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV LANG C.UTF-8
 
 RUN apt-get  -y update && apt-get install -y \
-	build-essential python3 gosu sudo libcgal-dev openssh-server\
+	build-essential python3 gosu sudo libcgal-dev openssh-server gdb\
 	htop nano cmake python3-distutils libpython3-dev python3-pip libtbb-dev
 
 RUN pip3 install numpy
