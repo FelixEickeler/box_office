@@ -6,3 +6,4 @@ src/_build
 modules/wrapper_cgal
 .idea
 __pychache__
+modules
