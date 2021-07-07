@@ -16,7 +16,7 @@ if __name__ == '__main__':
     parser.add_argument("--eval-only", action="store_true", help="perform evaluation only")
     parser.add_argument("--input", type=Path, default=Path("."), help="Input Pointcloud -  Tests for input format")
     parser.add_argument("--output", type=Path, default=Path("."), help="Output Boxdimensions, and graphs")
-    parser.add_argument("--test", action="store_true", help="runs tests")
+    parser.add_argument("--tests", action="store_true", help="runs tests")
 
     args = parser.parse_args()
     if args.test:

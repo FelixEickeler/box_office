@@ -1,7 +1,8 @@
-modules/wrapper_cgal/cmake-build-debug
-modules/wrapper_cgal/cmake-build-release/
-modules/wrapper_cgal/pybin_bin
-modules/wrapper_cgal/.idea
-modules/wrapper_cgal/_build
+src/cmake-build-debug
+src/cmake-build-release/
+src/pybin_bin
+src/.idea
+src/_build
+modules/wrapper_cgal
 .idea
 __pychache__
