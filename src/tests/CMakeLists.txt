@@ -1,0 +1,30 @@
+set(BINARY ${CMAKE_PROJECT_NAME}_testing)
+
+#setup gtest
+add_subdirectory("${PROJECT_SOURCE_DIR}/../modules/googletest" "modules/googletest" EXCLUDE_FROM_ALL)
+mark_as_advanced(
+        BUILD_GMOCK BUILD_GTEST BUILD_SHARED_LIBS
+        gmock_build_tests gtest_build_samples gtest_build_tests
+        gtest_disable_pthreads gtest_force_shared_crt gtest_hide_internal_symbols
+)
+
+enable_testing()
+include(GoogleTest)
+
+#setup test target
+file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false *.h *.cpp)
+set(SOURCES ${TEST_SOURCES})
+#message(${TEST_SOURCES})
+add_executable(${BINARY} ${TEST_SOURCES})
+target_link_libraries(${BINARY} PRIVATE gtest gtest_main pybind11::module pybind11::lto pybind11::windows_extras CGAL::CGAL CGAL::Eigen3_support)
+target_include_directories(${BINARY} PUBLIC ../code)
+target_link_libraries(${BINARY} PUBLIC ${CMAKE_PROJECT_NAME}_lib )
+#
+#add_test(NAME ${BINARY} COMMAND ${BINARY})
+#include_directories(${PROJECT_SOURCE_DIR})
+#file(GLOB SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+#add_executable(boxoffice_cpp_tests ${SRC_FILES})
+
+#target_link_libraries(BoxOffice_All_Tests PRIVATE gtest gtest_main)
+
+#target_link_libraries(${BINARY} PUBLIC ${CMAKE_PROJECT_NAME}_lib gtest)

@@ -65,7 +65,7 @@ np_array helpers::bbox_2_numpy(BBox bbox) {
     auto nbm = numpy_bbox.mutable_data();
 
     auto cnt = 0;
-    for(auto& point : bbox){
+    for(auto& point : bbox.vertices){
         nbm[cnt + 0] = float(point.x());
         nbm[cnt + 1] = float(point.y());
         nbm[cnt + 2] = float(point.z());

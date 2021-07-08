@@ -1,9 +1,9 @@
-#include "Evaluator.h"
-#include "typedefs.h"
+#include "code/Evaluator.h"
+#include "code/typedefs.h"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
-#include "helpers.h"
+#include "code/helpers.h"
 namespace py = pybind11;
 
 PYBIND11_MODULE(mvbb, module_handle){

@@ -226,7 +226,7 @@ namespace algorithm {
 
 
                 BBox bbox1 = fit_bbox(TPointCloudType(points3D.begin(), second_bbox_begins_at));
-                BBox bBox2 = fit_bbox(TPointCloudType(second_bbox_begins_at, points3D.end());
+                BBox bBox2 = fit_bbox(TPointCloudType(second_bbox_begins_at, points3D.end()));
 
                 // update tree
                 tree.flat_hierachry.emplace(bbox1);

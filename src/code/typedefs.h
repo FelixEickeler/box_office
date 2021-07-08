@@ -5,7 +5,8 @@
 #ifndef TEST_BIND_TYPEDEFS_H
 #define TEST_BIND_TYPEDEFS_H
 #define BOOST_BIND_GLOBAL_PLACEHOLDERS
-#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+//#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <CGAL/Simple_cartesian.h>
 #include <pybind11/numpy.h>
 #include <tuple>
 #include <filesystem>
@@ -14,7 +15,7 @@
 #include <Eigen/Dense>
 
 namespace boxy{
-    typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
+    typedef CGAL::Simple_cartesian<float> Kernel;
     typedef Kernel::Point_3 Point;
     typedef std::tuple<Point, uint32_t> XYZC;
     typedef CGAL::Nth_of_tuple_property_map<0, XYZC> Point_map;
@@ -36,15 +37,35 @@ namespace boxy{
         F=5
     };
 
+
+    //TODO cartesian_begin  should be an iterator pointing to the first float
+    Vector3f cgal_to_eigen(Point point){
+        Vector3f tmp{point.x(), point.y(), point.z()};
+        return tmp;
+    }
+
+    Vector3f cgal_to_eigen(Kernel::Vector_3 point){
+        Vector3f tmp{point.x(), point.y(), point.z()};
+        return tmp;
+    }
+
+    Point eigen_to_cgal(Vector3f point){
+        Point* cgal= reinterpret_cast<Point*>(const_cast<float*>(point.data()));
+        return *cgal;
+    }
+
     struct CoordinateSystem2D{
         Vector3f e_0;
         Vector3f e_x;
         Vector3f e_y;
 
         [[nodiscard]] Point2D project_onto_plane(const Point& point3D) const{
-            Vector3f p3D(point3D);
-            Vector2f p2D(p3D*e_x, p3D*e_y);
-            return p2D;
+            //TODO fix this
+//            Vector3f p3D(point3D);
+//            Vector2f p2D(p3D*e_x, p3D*e_y);
+//            return p2D;
+              Point2D p2D;
+              return p2D;
         }
 
         [[nodiscard]] Point project_to_global(const Point2D& point2D) const{
@@ -84,9 +105,9 @@ namespace boxy{
 
                 CoordinateSystem2D get_plane_coordinates2D(BoxFaces face) const{
                     auto triplet = GetPoints(face);
-                    Vector3f e_x{triplet.X() - triplet.O()};
-                    Vector3f e_y{triplet.Y() - triplet.O()};
-                    Vector3f e_0{triplet.O()};
+                    auto e_x = cgal_to_eigen(triplet.X() - triplet.O());
+                    auto e_y = cgal_to_eigen(triplet.Y() - triplet.O());
+                    auto e_0 = cgal_to_eigen(triplet.O());
                     e_x.normalize();
                     e_y.normalize();
                     return {e_0, e_x, e_y};

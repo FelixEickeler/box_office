@@ -1,24 +1,20 @@
 cmake_minimum_required(VERSION 3.5)
 set(CMAKE_CXX_STANDARD 17)
-project(test_bind)
-message(.)
-add_subdirectory(../modules/pybind11 pybin_bin EXCLUDE_FROM_ALL)
+project(BoxOffice)
+set(BINARY ${CMAKE_PROJECT_NAME})
 
-pybind11_add_module(mvbb main.cpp)
-target_compile_definitions(mvbb PRIVATE VERSION_INFO=${EXAMPLE_VERSION_INFO})
-target_link_libraries(mvbb PRIVATE tbb)
-target_sources(mvbb PRIVATE Evaluator.cpp Evaluator.h helpers.h helpers.cpp typedefs.h trim.h algorithm.cpp algorithm.h)
+message(..)
 
+# Setup foreign projects
+# pybind11 + Python Target
+add_subdirectory(../modules/pybind11 ../pybin_bin EXCLUDE_FROM_ALL)
+
+# CGal
 set(CGAL_EIGEN3_ENABLED TRUE)
-
 find_package(CGAL REQUIRED)
 include(${CGAL_USE_FILE})
 
-target_link_libraries(mvbb PRIVATE CGAL::CGAL)
-set(CGAL_DO_NOT_WARN_ABOUT_CMAKE_BUILD_TYPE TRUE)
-set(CMAKE_BUILD_TYPE Release)
-
-
+# Eigen 3
 find_package(Eigen3 3.1.0 REQUIRED) #(3.1.0 or greater)
 include(CGAL_Eigen3_support)
 if(NOT TARGET CGAL::Eigen3_support)
@@ -27,8 +23,24 @@ if(NOT TARGET CGAL::Eigen3_support)
     return()
 endif()
 
+add_subdirectory(code)
+option(PACKAGE_TESTS "Build the tests" ON)
+if(PACKAGE_TESTS)
+    add_subdirectory(tests)
+endif()
+
+
+
+#target_link_libraries(mvbb PRIVATE )
+#set(CGAL_DO_NOT_WARN_ABOUT_CMAKE_BUILD_TYPE TRUE)
+#set(CMAKE_BUILD_TYPE Release)
+
+
+
 #create_single_source_cgal_program("bench_obb.cpp")
-target_link_libraries(mvbb PUBLIC CGAL::Eigen3_support)
+#target_link_libraries(mvbb PUBLIC)
+
+# Testing in C++
 
 
 #find_package(Eigen3 3.1.0 REQUIRED) #(3.1.0 or greater)
