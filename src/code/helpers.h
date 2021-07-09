@@ -14,7 +14,7 @@ using namespace boxy;
 
 namespace  helpers {
 
-    // TODO fix to iterators to avoid copy before
+    // TODO fix to iterators to avoid copy before, also make these in a pybind file !
     np_array xyzc_2_numpy(const pointcloud_xyzc &pointcloud);
 
     np_array xyzc_2_numpy(crange<pointcloud_xyzc> objr);

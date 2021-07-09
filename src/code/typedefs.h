@@ -39,17 +39,17 @@ namespace boxy{
 
 
     //TODO cartesian_begin  should be an iterator pointing to the first float
-    Vector3f cgal_to_eigen(Point point){
+    inline Vector3f cgal_to_eigen(Point point){
         Vector3f tmp{point.x(), point.y(), point.z()};
         return tmp;
     }
 
-    Vector3f cgal_to_eigen(Kernel::Vector_3 point){
+    inline Vector3f cgal_to_eigen(Kernel::Vector_3 point){
         Vector3f tmp{point.x(), point.y(), point.z()};
         return tmp;
     }
 
-    Point eigen_to_cgal(Vector3f point){
+    inline Point eigen_to_cgal(Vector3f point){
         Point* cgal= reinterpret_cast<Point*>(const_cast<float*>(point.data()));
         return *cgal;
     }
