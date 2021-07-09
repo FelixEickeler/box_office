@@ -59,13 +59,13 @@ namespace boxy{
         Vector3f e_x;
         Vector3f e_y;
 
+        CoordinateSystem2D(Vector3f O, Vector3f X, Vector3f Y) : e_0{O}, e_x(X/X.norm()), e_y(Y/Y.norm()){}
+
         [[nodiscard]] Point2D project_onto_plane(const Point& point3D) const{
-            //TODO fix this
-//            Vector3f p3D(point3D);
-//            Vector2f p2D(p3D*e_x, p3D*e_y);
-//            return p2D;
-              Point2D p2D;
-              return p2D;
+              Vector3f p3D(cgal_to_eigen(point3D));
+              p3D = p3D - e_0;
+              Vector2f p2D(e_x.dot(p3D), e_y.dot(p3D));
+              return p2D;;
         }
 
         [[nodiscard]] Point project_to_global(const Point2D& point2D) const{
@@ -99,11 +99,11 @@ namespace boxy{
 
         public:
                 std::array<Point , 8> vertices;
-                Plane_3 get_plane(BoxFaces face) const{
+                [[nodiscard]] Plane_3 get_plane(BoxFaces face) const{
                     return std::make_from_tuple<Plane_3>(GetPoints(face).YOX);
                 }
 
-                CoordinateSystem2D get_plane_coordinates2D(BoxFaces face) const{
+                [[nodiscard]] CoordinateSystem2D get_plane_coordinates2D(BoxFaces face) const{
                     auto triplet = GetPoints(face);
                     auto e_x = cgal_to_eigen(triplet.X() - triplet.O());
                     auto e_y = cgal_to_eigen(triplet.Y() - triplet.O());
@@ -128,6 +128,7 @@ namespace boxy{
                 }
     };
 
+    // TODO Extract this to a Pybind Typedef i guess ?
     namespace py = pybind11;
     using np_array = py::array_t<float, py::array::c_style> ;
     using objectlist = std::unordered_map<int, std::string>;
