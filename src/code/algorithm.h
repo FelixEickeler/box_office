@@ -23,7 +23,7 @@ namespace algorithm {
     };
 
     template<class Tnode_type>
-    struct FitAnsSplitHierarchy{
+    struct FitAndSplitHierarchy{
         std::vector<Tnode_type> flat_hierarchy;
         boxy::crange<Tnode_type> getNodes(uint32_t kappa){
             uint32_t start_index;
@@ -40,7 +40,6 @@ namespace algorithm {
             }
             return boxy::crange<Tnode_type>{flat_hierarchy.begin() + start_index, flat_hierarchy.begin() + end_index};
         }
-
     };
 
     template<size_t TRaster>
@@ -176,7 +175,7 @@ namespace algorithm {
         }
 
         auto initial_bbox = fit_bbox(points3D);
-        FitAnsSplitHierarchy<TPointCloudType> tree;
+        FitAndSplitHierarchy<TPointCloudType> tree;
         tree.flat_hierachry.emplace(initial_bbox);
 
         for(auto depth=0; depth<kappa; ++depth){
