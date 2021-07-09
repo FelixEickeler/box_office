@@ -2,7 +2,7 @@
 
 ###### ....is an evaluator for up and downscaling of point clouds
 
-<img src="/docs/overview_paper.png" height="400">
+<img src="/docs/overview_paper.png" height="200">
 
 
 ## TODOS:
@@ -21,7 +21,7 @@ Behind the scenes the point cloud is saved in a single std::vector. The bounding
 point cloud with std::partition. This leaves the bounding box hierarchy (called FitAndSplitHierachy) completly without any points and just references to the start and end.
 
 [comment]: <> (![]&#40;/docs/bounding_hirachie.png&#41;)
-<img src="/docs/bounding_hirachie.png" height="400">
+<img src="/docs/bounding_hirachie.png" height="700">
 
 ### CGal Conda
 https://anaconda.org/conda-forge/cgal
