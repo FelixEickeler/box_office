@@ -79,46 +79,81 @@ std::tuple<algorithm::Rasterizer<3>, std::vector<Point2D>> GenerateRasterizer3x3
 }
 
 TEST (algorithm_testing /*test suite name*/, get_first_and_last_slot /*test name*/) {
-
     auto [rasterizer, _] = GenerateRasterizer3x3();
-    const auto test_points_x = (MatrixXu(2,3) <<  0, 1, 2, 2, 2, 2).finished();
+    const auto test_points_x = (MatrixXu(2,3) <<  0, 1, 2, 3, 3, 3).finished();
     auto res_x = rasterizer.get_first_and_last_slot<direction_ex>();
     ASSERT_EQ(test_points_x, res_x);
 
-    const auto test_points_y = (MatrixXu(2,3) <<  0, 1, 0, 0, 1, 2).finished();
+    const auto test_points_y = (MatrixXu(2,3) <<  0, 1, 0, 1, 2, 3).finished();
     auto res_y = rasterizer.get_first_and_last_slot<direction_ey>();
     ASSERT_EQ(test_points_y, res_y);
 }
 
+
 TEST (algorithm_testing /*test suite name*/, min_split_rasterized /*test name*/) {
     auto [rasterizer, _] = GenerateRasterizer3x3();
-    auto msr_ex = rasterizer.min_split_rasterized<direction_ex>();
-    auto msr_ey = rasterizer.min_split_rasterized<direction_ey>();
-    ASSERT_EQ(msr_ex.index, 2);
-    ASSERT_EQ(msr_ey.index, 0);
+    ASSERT_TRUE(false);
+//    auto msr_ex = rasterizer.min_split_rasterized<direction_ex>();
+//    auto msr_ey = rasterizer.min_split_rasterized<direction_ey>();
+//    ASSERT_EQ(msr_ex.index, 2);
+//    ASSERT_EQ(msr_ey.index, 0);
 }
+
 
 /*  3 x 7
  *  0 0 0 0 1 1 1
  *  0 0 0 0 1 1 1
  *  0 1 1 1 1 1 0
+ *
+ *  Rasterizer:
+ *  Expected: true
+ *   1 1 1 1 1 0
+ *   0 0 0 0 0 0
+ *   0 0 0 1 1 1
+ *   0 0 0 0 0 0
+ *   0 0 0 0 0 0
+ *   0 0 0 1 1 1
+ *
  */
-TEST (algorithm_testing /*test suite name*/, min_split_rasterized2 /*test name*/) {
-
+std::tuple<algorithm::Rasterizer<6>, std::vector<Point2D>> GenerateRasterizer3x7(){
     using namespace algorithm;
-    std::array<Point2D, 11> more_test_points = {{
-        {1,0}, {2,0}, {3,0}, {4,0}, {5,0},
-        {4,1}, {5,1}, {6,1},
-        {4,2}, {5,2}, {6,2},
+    std::vector<Point2D> more_test_points = {{
+            {1,0}, {2,0}, {3,0}, {4,0}, {5,0},
+            {4,1}, {5,1}, {6,1},
+            {4,2}, {5,2}, {6,2},
     }};
     std::array<float,4> min_max = {1,0, 6, 2};
     Rasterizer<6> rasterizer(min_max);
     for(auto& p2d : more_test_points){
         rasterizer.insert(p2d);
     }
+    return {rasterizer, more_test_points};
+}
 
-    auto msr_ex = rasterizer.min_split_rasterized<direction_ex>();
-    auto msr_ey = rasterizer.min_split_rasterized<direction_ey>();
-    ASSERT_EQ(msr_ex.index, 2);
-    ASSERT_EQ(msr_ey.index, 0);
+TEST (algorithm_testing /*test suite name*/, get_first_and_last_slot2 /*test name*/) {
+    auto [rasterizer, _] = GenerateRasterizer3x7();
+
+    const auto test_points_x = (MatrixXu(2,6) <<  0, 0, 0, 0, 0, 2, 1,1,1,6,6,6).finished();
+    auto res_x = rasterizer.get_first_and_last_slot<direction_ex>();
+//    EXPECT_TRUE(false) << "result dim=>x\n" << res_x;
+    ASSERT_EQ(test_points_x, res_x);
+//
+    const auto test_points_y = (MatrixXu(2,6) <<  0, 0, 3, 0, 0, 3, 5,0,6,0,0,6).finished();
+    auto res_y = rasterizer.get_first_and_last_slot<direction_ey>();
+//    EXPECT_TRUE(false) << rasterizer.get_grid();
+//    EXPECT_TRUE(false) << "result dim=>y\n" << res_y;
+//    ASSERT_TRUE(false);
+    ASSERT_EQ(test_points_y, res_y);
+}
+
+
+TEST (algorithm_testing /*test suite name*/, min_split_rasterized2 /*test name*/) {
+    using namespace algorithm;
+
+    auto [rasterizer, _]  = GenerateRasterizer3x7();
+    ASSERT_TRUE(false);
+//    auto msr_ex = rasterizer.min_split_rasterized<direction_ex>();
+//    auto msr_ey = rasterizer.min_split_rasterized<direction_ey>();
+//    ASSERT_EQ(msr_ex.index, 2);
+//    ASSERT_EQ(msr_ey.index, 0);
 }

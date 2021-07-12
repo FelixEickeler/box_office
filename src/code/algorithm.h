@@ -44,8 +44,8 @@ namespace algorithm {
 
     template<size_t TRaster>
     class Rasterizer{
-//        MatrixXu grid = MatrixXu::Zero(TRaster, TRaster);
-        Eigen::Matrix<uint32_t ,6,6> grid = Eigen::Matrix<uint32_t, 6,6>::Zero();//(TRaster, TRaster);
+        MatrixXu grid = MatrixXu::Zero(TRaster, TRaster);
+//        Eigen::Matrix<uint32_t ,TRaster,TRaster> grid = Eigen::Matrix<uint32_t, TRaster,TRaster>::Zero();//(TRaster, TRaster);
 
         std::array<float, 4> min_max;
         float step_x;
@@ -56,11 +56,11 @@ namespace algorithm {
                                                     step_x{(_min_max[2]-min_max[0])/(TRaster-1)},
                                                     step_y{(_min_max[3]-min_max[1])/(TRaster-1)}{ }
 
-            size_t raster() const{
+            [[nodiscard]] size_t raster() const{
                     return TRaster;
                 }
 
-            std::tuple<float, float> step_sizes() const{
+            [[nodiscard]] std::tuple<float, float> step_sizes() const{
                 return {step_x, step_y};
             }
 
@@ -80,19 +80,18 @@ namespace algorithm {
             /// \return Eigen::Vector2i<TRaster : v(n,0) start of the span and v(n,1) end of it
            template<bool TDirection>
            auto get_first_and_last_slot(){
-               MatrixXu _span(2, TRaster);
+                MatrixXu _span = MatrixXu::Zero(2, TRaster);
 
                for(auto i=0; i < TRaster; ++i){
                    bool first_set = false;
                    for(auto j=0; j < TRaster; ++j){
-//                        std::cout <<"i: " <<  i << "j:" << j;
-                        if constexpr(TDirection == direction_ey){
+                        if constexpr(TDirection){
                            if(grid(i, j) != 0){
-                                if(!first_set){
-                                    _span(0, i) = j;
-                                    first_set = true;
-                                }
-                                _span(1, i) = j;
+                               if(!first_set){
+                                   _span(0, i) = j;
+                                   first_set = true;
+                               }
+                               _span(1, i) = j+1;
                             }
                         }
                         else{
@@ -101,7 +100,7 @@ namespace algorithm {
                                     _span(0, i) = j;
                                     first_set = true;
                                 }
-                                _span(1, i) = j;
+                                _span(1, i) = j+1;
                             }
                         }
                    }
