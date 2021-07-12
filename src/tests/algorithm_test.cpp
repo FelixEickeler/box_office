@@ -50,7 +50,7 @@ TEST (algorithm_testing /*test suite name*/, Rasterizer_Insert /*test name*/) {
     }
     auto verity_matrix = Eigen::Matrix<uint32_t, 3, 3>::Ones();
     auto grid = rasterizer.get_grid();
-//    ASSERT_EQ(verity_matrix, grid);
+    ASSERT_EQ(verity_matrix, grid);
 }
 
 
@@ -90,13 +90,12 @@ TEST (algorithm_testing /*test suite name*/, get_first_and_last_slot /*test name
 }
 
 
-TEST (algorithm_testing /*test suite name*/, min_split_rasterized /*test name*/) {
+TEST (algorithm_testing /*test suite name*/, best_split_rasterized /*test name*/) {
     auto [rasterizer, _] = GenerateRasterizer3x3();
-    ASSERT_TRUE(false);
-//    auto msr_ex = rasterizer.min_split_rasterized<direction_ex>();
-//    auto msr_ey = rasterizer.min_split_rasterized<direction_ey>();
-//    ASSERT_EQ(msr_ex.index, 2);
-//    ASSERT_EQ(msr_ey.index, 0);
+    auto msr_ex = rasterizer.best_split_rasterized<direction_ex>();
+    auto msr_ey = rasterizer.best_split_rasterized<direction_ey>();
+    ASSERT_EQ(msr_ex.index, 0);
+    ASSERT_EQ(msr_ey.index, 0);
 }
 
 
@@ -132,28 +131,38 @@ std::tuple<algorithm::Rasterizer<6>, std::vector<Point2D>> GenerateRasterizer3x7
 
 TEST (algorithm_testing /*test suite name*/, get_first_and_last_slot2 /*test name*/) {
     auto [rasterizer, _] = GenerateRasterizer3x7();
-
     const auto test_points_x = (MatrixXu(2,6) <<  0, 0, 0, 0, 0, 2, 1,1,1,6,6,6).finished();
     auto res_x = rasterizer.get_first_and_last_slot<direction_ex>();
-//    EXPECT_TRUE(false) << "result dim=>x\n" << res_x;
     ASSERT_EQ(test_points_x, res_x);
-//
     const auto test_points_y = (MatrixXu(2,6) <<  0, 0, 3, 0, 0, 3, 5,0,6,0,0,6).finished();
     auto res_y = rasterizer.get_first_and_last_slot<direction_ey>();
-//    EXPECT_TRUE(false) << rasterizer.get_grid();
-//    EXPECT_TRUE(false) << "result dim=>y\n" << res_y;
-//    ASSERT_TRUE(false);
     ASSERT_EQ(test_points_y, res_y);
 }
 
 
 TEST (algorithm_testing /*test suite name*/, min_split_rasterized2 /*test name*/) {
     using namespace algorithm;
-
     auto [rasterizer, _]  = GenerateRasterizer3x7();
-    ASSERT_TRUE(false);
-//    auto msr_ex = rasterizer.min_split_rasterized<direction_ex>();
-//    auto msr_ey = rasterizer.min_split_rasterized<direction_ey>();
-//    ASSERT_EQ(msr_ex.index, 2);
-//    ASSERT_EQ(msr_ey.index, 0);
+    auto msr_ex = rasterizer.best_split_rasterized<direction_ex>();
+    auto msr_ey = rasterizer.best_split_rasterized<direction_ey>();
+    ASSERT_EQ(msr_ex.index, 2);
+    ASSERT_EQ(msr_ex.area, 21);
+    ASSERT_EQ(msr_ey.index, 0);
+    ASSERT_EQ(msr_ey.area, 20);
 }
+
+/// Translate back to 3x7 grid;
+TEST (algorithm_testing /*test suite name*/, min_split_2 /*test name*/) {
+    using namespace algorithm;
+    auto [rasterizer, _]  = GenerateRasterizer3x7();
+    auto ms_ex = rasterizer.best_split<direction_ex>();
+    auto ms_ey = rasterizer.best_split<direction_ey>();
+    Eigen::Vector2f ex_val;  ex_val << 4,0;
+//    EXPECT_TRUE(false) << "Check this, as the res increases from the grid used, but should be fine in continuous space !" ;
+    Eigen::Vector2f ey_val;  ey_val << 0,0.4;
+    ASSERT_EQ(ms_ex.coordinate, ex_val);
+    ASSERT_FLOAT_EQ(ms_ex.area, 8.4);
+    ASSERT_EQ(ms_ey.coordinate, ey_val);
+    ASSERT_FLOAT_EQ(ms_ey.area, 8);
+}
+

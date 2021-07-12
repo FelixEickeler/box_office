@@ -113,14 +113,36 @@ namespace algorithm {
             /// \tparam TDirection :  true for row; false for column
             /// \return BestGridSplit : rasterized position, no global space !
            template <bool TDirection>
-           auto min_split_rasterized(){
-               auto slot_sizes = get_first_and_last_slot<TDirection>();//
-               static const auto slot_distances = VectorXu::LinSpaced(TRaster, 0, TRaster).colwise().replicate(2);
-               auto max_raster = VectorXu::Constant(TRaster, 1);
-               auto area = slot_sizes.row(1); // * slot_distances; //+ (max_raster - slot_sizes.row(0)) * (max_raster-slot_distances);
-               auto idx_min_area = area.minCoeff();
-               auto size_min_area = area[idx_min_area];
-               return BestGridSplit{idx_min_area, idx_min_area};
+           auto best_split_rasterized(){
+              auto slot_sizes = get_first_and_last_slot<TDirection>();
+              MatrixXu zero_stopper = (slot_sizes.row(1).array() == 0).template cast<uint32_t>()*UINT32_MAX;
+              zero_stopper += slot_sizes.row(0);
+              Eigen::Matrix<uint32_t, 2, 2> bbox_boundaries = Eigen::Matrix<uint32_t, 2,2>::Zero();
+
+               auto min_area = UINT32_MAX;
+               uint32_t idx_min_area = 0;
+//               auto test = slot_sizes.block(0,0,2,TRaster);
+
+
+               // cut between 0 and 1 of grid, last row does not after
+               for(auto idx=0; idx < slot_sizes.cols()-1; ++idx){
+                   uint32_t wbbox2 = TRaster-idx-1;
+                   if(bbox_boundaries(0,0) > slot_sizes(0,idx)) bbox_boundaries(0,0) = slot_sizes(0,idx);
+                   if(bbox_boundaries(1,0) < slot_sizes(1,idx)) bbox_boundaries(1,0) = slot_sizes(1,idx);
+
+                   // only evaluate non zero:zero columns, for minimum => zero_stopper!
+                   bbox_boundaries(0,1) = zero_stopper.topRightCorner(1,wbbox2).minCoeff();
+                   bbox_boundaries(1,1) = slot_sizes.bottomRightCorner(1,wbbox2).maxCoeff();
+
+                   auto area = (idx+1) * (bbox_boundaries(1,0) -  bbox_boundaries(0,0))+
+                           wbbox2 * (bbox_boundaries(1,1) -  bbox_boundaries(0,1));
+
+                   if(area < min_area){
+                       min_area = area;
+                       idx_min_area = idx;
+                   }
+               }
+               return BestGridSplit{min_area, idx_min_area};
            }
 
             // direction 0 => first orientation, direction true(1) => second orientation:
@@ -128,14 +150,15 @@ namespace algorithm {
             // Ah btw this is not transformed in the a real coordinate system (e.g. cutting plane)
             template<bool TDirection>
             BestSplit best_split(){
-                auto bgs = min_split_rasterized<TDirection>();
+                auto bgs = best_split_rasterized<TDirection>();
                 float cell_area = step_x * step_y;
+
                 Vector2f cutting_point;
                 if constexpr (TDirection){ // true being direction_ey
-                    cutting_point << 0, bgs.index * step_y + min_max[1];
+                    cutting_point << 0, (bgs.index+1) * step_y + min_max[1];
                 }
                 else{
-                    cutting_point << bgs.index * step_x + min_max[0], 0;
+                    cutting_point << (bgs.index+1) * step_x + min_max[0], 0;
                 }
                 return BestSplit{bgs.area * cell_area, cutting_point};
             }
