@@ -13,6 +13,7 @@
 #include <CGAL/property_map.h>
 #include <CGAL/Plane_3.h>
 #include <Eigen/Dense>
+#include <stdexcept>
 
 namespace boxy{
     typedef CGAL::Simple_cartesian<float> Kernel;
@@ -27,6 +28,8 @@ namespace boxy{
     using Vector3f = Eigen::Vector3f;
     using Vector2f = Eigen::Vector2f;
     using Grid = Eigen::Matrix2Xf;
+    using MatrixXu = Eigen::Matrix<uint32_t, Eigen::Dynamic, Eigen::Dynamic>;
+    using VectorXu = Eigen::Matrix<uint32_t , Eigen::Dynamic, 1>;
 
     enum BoxFaces{
         A=0,
@@ -94,6 +97,8 @@ namespace boxy{
                 case BoxFaces::D: return {vertices[2], vertices[3], vertices[4]};
                 case BoxFaces::E: return {vertices[4], vertices[5], vertices[6]};
                 case BoxFaces::F: return {vertices[6], vertices[1], vertices[2]};
+                default:
+                    throw std::runtime_error("Case {name} not found.");
             }
         }
 

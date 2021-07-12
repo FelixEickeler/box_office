@@ -2,7 +2,7 @@
 
 ###### ....is an evaluator for up and downscaling of point clouds
 
-<img src="/docs/overview_paper.png" height="200">
+<img src="/docs/overview_paper.png" height="260"
 
 
 ## TODOS:

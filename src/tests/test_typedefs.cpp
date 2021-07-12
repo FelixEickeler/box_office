@@ -4,6 +4,7 @@
 #include "gtest/gtest.h"
 #include "typedefs.h"
 #include <array>
+#include "data.h"
 
 TEST (typdef_testing /*test suite name*/, Cgal2Eigen_Point3_Vector3f /*test name*/) {
     boxy::Point point{1,2,3};
@@ -27,20 +28,6 @@ TEST (typdef_testing /*test suite name*/, Eigen2Cgal_Vector3f_Vector3 /*test nam
     ASSERT_EQ(eigen_vector.x(), cgal_vector.x());
     ASSERT_EQ(eigen_vector.x(), cgal_vector.x());
     ASSERT_EQ(eigen_vector.x(), cgal_vector.x());
-}
-
-std::tuple<std::array<boxy::Point, 9>, std::array<boxy::Vector2f,9>> Cube_Diag_Testpoints() {
-    std::array<boxy::Point, 9> test_points = {{
-          {0, 0, 0}, {1, 1, 0}, {2, 2, 0},
-          {0, 0, 1}, {1, 1, 1}, {2, 2, 1},
-          {0, 0, 2}, {1, 1, 2}, {2, 2, 2}
-    }};
-    std::array<boxy::Vector2f, 9> result_points = {{
-          {2, 2 * sqrt(2)}, {2, sqrt(2)}, {2, 0},
-          {1, 2 * sqrt(2)}, {1, sqrt(2)}, {1, 0},
-          {0, 2 * sqrt(2)}, {0, sqrt(2)}, {0, 0},
-    }};
-    return {test_points, result_points};
 }
 
 
@@ -76,14 +63,6 @@ TEST (typdef_testing /*test suite name*/, CooridnateSystem2D_Project2Global/*tes
     }
 }
 
-std::array<boxy::Point, 8> Get_CubePoints(){
-    std::array<boxy::Point, 8> cube_points = {{
-              {0,0,0}, {1,0,0}, {1,1,0},
-              {0,1,0}, {0,1,1}, {0,0,1},
-              {1,0,1}, {1,1,1},
-      }};
-    return cube_points;
-}
 
 TEST (typdef_testing /*test suite name*/, BBOX_get_plane_allFaces/*test name*/) {
     boxy::BBox bbox;
@@ -117,4 +96,15 @@ TEST (typdef_testing /*test suite name*/, BBOX_minMax/*test name*/) {
     ASSERT_EQ(min_max[3], 1);
     ASSERT_EQ(min_max[4], 1);
     ASSERT_EQ(min_max[5], 1);
+}
+
+TEST (typdef_testing /*test suite name*/, crange/*test name*/) {
+    boxy::pointcloud_xyzc pc;
+    for(auto p : Get_CubePoints()){
+        pc.push_back(std::make_tuple(p,0));
+    }
+
+    boxy::crange<boxy::pointcloud_xyzc> cr {pc.begin(), pc.end()};
+    ASSERT_EQ(cr.begin, pc.begin());
+    ASSERT_EQ(cr.end, pc.end());
 }

@@ -22,95 +22,117 @@ namespace algorithm {
         crange<Tpointcloud> elements;
     };
 
-    template<class Tnode_type>
+    template<class TNodeType>
     struct FitAndSplitHierarchy{
-        std::vector<Tnode_type> flat_hierarchy;
-        boxy::crange<Tnode_type> getNodes(uint32_t kappa){
+        std::vector<TNodeType> flat_hierarchy;
+        boxy::crange<std::vector<TNodeType>> getNodes(uint32_t kappa){
             uint32_t start_index;
             uint32_t end_index;
             if(kappa > 1) {
-                kappa -= 2; // shift
+                kappa -= 1; // shift1
                 uint32_t nr_bboxes = 1 << kappa;
-                start_index = 1 + 6 * (nr_bboxes >> 1) - 1;
-                end_index = start_index * 2 + 5;
+                start_index = nr_bboxes;
+                end_index = start_index * 2 - 1;
             }
             else{
                 start_index = 0;
                 end_index = 1;
             }
-            return boxy::crange<Tnode_type>{flat_hierarchy.begin() + start_index, flat_hierarchy.begin() + end_index};
+            return boxy::crange<std::vector<TNodeType>>{flat_hierarchy.begin() + start_index, flat_hierarchy.begin() + end_index};
         }
     };
 
     template<size_t TRaster>
     class Rasterizer{
-        Eigen::Matrix<uint32_t , 2, TRaster> grid;
+//        MatrixXu grid = MatrixXu::Zero(TRaster, TRaster);
+        Eigen::Matrix<uint32_t ,6,6> grid = Eigen::Matrix<uint32_t, 6,6>::Zero();//(TRaster, TRaster);
+
         std::array<float, 4> min_max;
-//        float bias_x;
-//        float bias_y;
         float step_x;
         float step_y;
 
         public:
             explicit Rasterizer(std::array<float,4> _min_max) : min_max{_min_max},
-                                                    step_x{(_min_max[2]-min_max[0])/TRaster},
-                                                    step_y{(_min_max[3]-min_max[1])/TRaster}{ }
+                                                    step_x{(_min_max[2]-min_max[0])/(TRaster-1)},
+                                                    step_y{(_min_max[3]-min_max[1])/(TRaster-1)}{ }
 
-            size_t raster(){
+            size_t raster() const{
                     return TRaster;
                 }
 
+            std::tuple<float, float> step_sizes() const{
+                return {step_x, step_y};
+            }
+
+            [[nodiscard]] const auto& get_grid() const{
+                return grid;
+            }
+
             void insert(Point2D point2D){
                 auto x_coord = static_cast<uint32_t>((point2D.x() - min_max[0]) / step_x);
-                auto y_coord = static_cast<uint32_t>((point2D.y() - min_max[2]) / step_y);
-                grid[x_coord, y_coord] += 1;
+                auto y_coord = static_cast<uint32_t>((point2D.y() - min_max[1]) / step_y);
+                grid(y_coord, x_coord) += 1;
             }
 
+            /// This method returns a vector of spans represneting the occupoied space of the grid.
+            /// It will be either provide these as column : direciton_x(false)  or row : direction_y(true) represntations
+            /// \tparam TDirection :  true for row; false for column
+            /// \return Eigen::Vector2i<TRaster : v(n,0) start of the span and v(n,1) end of it
+           template<bool TDirection>
+           auto get_first_and_last_slot(){
+               MatrixXu _span(2, TRaster);
 
-            // This method does not distinguish between row and column layout !
-           auto get_first_and_last_rowindex(Eigen::VectorXf col){
-                struct low_high{
-                    uint32_t low=0;
-                    uint32_t high=255;
-                };
-
-               low_high lh;
-               //no abort condition as we dont know if all grid cells are populated
-               for(auto row=0; row < TRaster; ++row){
-                    if(col(row) != 0){
-                        if(lh.low == 0)  lh.low = row;
-                        lh.high = row;
-                    }
+               for(auto i=0; i < TRaster; ++i){
+                   bool first_set = false;
+                   for(auto j=0; j < TRaster; ++j){
+//                        std::cout <<"i: " <<  i << "j:" << j;
+                        if constexpr(TDirection == direction_ey){
+                           if(grid(i, j) != 0){
+                                if(!first_set){
+                                    _span(0, i) = j;
+                                    first_set = true;
+                                }
+                                _span(1, i) = j;
+                            }
+                        }
+                        else{
+                            if(grid(j, i) != 0){
+                                if(!first_set){
+                                    _span(0, i) = j;
+                                    first_set = true;
+                                }
+                                _span(1, i) = j;
+                            }
+                        }
+                   }
                 }
-               return lh;
+               return _span;
             }
 
-            // This method is calculating the splits on the grid inputet. The result will be gird independent
-            // but not transformed in an overall coordinate system.
-            auto min_split(){
-                uint32_t idx_min_area = 0;
-                uint32_t size_min_area = UINT32_MAX;
-                for(auto col = 0; col < TRaster;++col){
-                    auto[ low, high] = get_first_and_last_rowindex(grid.col(col));
-                    // sizer of the boxes is (0->high) * (0->col) + (low->max) * (col->max)
-                    auto area = high * col + (TRaster - low) * (TRaster-col);
-                    if(area < size_min_area){
-                        idx_min_area = col;
-                        size_min_area = area;
-                    }
-                }
-                return BestGridSplit{size_min_area, idx_min_area};
-            }
+
+            /// This method is calculating the splits on the grid of the rasterizer. It is not transformed in an overall coordinate system !
+            /// \tparam TDirection :  true for row; false for column
+            /// \return BestGridSplit : rasterized position, no global space !
+           template <bool TDirection>
+           auto min_split_rasterized(){
+               auto slot_sizes = get_first_and_last_slot<TDirection>();//
+               static const auto slot_distances = VectorXu::LinSpaced(TRaster, 0, TRaster).colwise().replicate(2);
+               auto max_raster = VectorXu::Constant(TRaster, 1);
+               auto area = slot_sizes.row(1); // * slot_distances; //+ (max_raster - slot_sizes.row(0)) * (max_raster-slot_distances);
+               auto idx_min_area = area.minCoeff();
+               auto size_min_area = area[idx_min_area];
+               return BestGridSplit{idx_min_area, idx_min_area};
+           }
 
             // direction 0 => first orientation, direction true(1) => second orientation:
             // This is a little hacky but is my first constexpr !
             // Ah btw this is not transformed in the a real coordinate system (e.g. cutting plane)
-            template<bool direction>
+            template<bool TDirection>
             BestSplit best_split(){
-                auto bgs = min_split();
+                auto bgs = min_split_rasterized<TDirection>();
                 float cell_area = step_x * step_y;
                 Vector2f cutting_point;
-                if constexpr (direction){
+                if constexpr (TDirection){ // true being direction_ey
                     cutting_point << 0, bgs.index * step_y + min_max[1];
                 }
                 else{
@@ -220,6 +242,7 @@ namespace algorithm {
                 Plane_3 cutting_plane(fulcrum, projection_plane.orthogonal_vector);
 
                 // split and fit new boxes
+                // TODO Move this inside FitAndSplitHierachy !
                 auto second_bbox_begins_at = std::partition(points3D.cbegin(), points3D.cend(),
                                                          [cutting_plane](auto& point){cutting_plane.has_on_negative_side(point);});
 

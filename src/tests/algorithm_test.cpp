@@ -4,7 +4,121 @@
 
 #include "gtest/gtest.h"
 #include "algorithm.h"
+#include <algorithm>
+#include "typedefs.h"
+#include "data.h"
 
-TEST (algorithm_testing /*test suite name*/, take_first_n_1to10 /*test name*/) {
+TEST (algorithm_testing /*test suite name*/, FitAndSplitHirachy /*test name*/) {
+    {
+        using namespace algorithm;
+        using type_fash =  FitAndSplitNode<pointcloud_xyzc>;
+        FitAndSplitHierarchy<type_fash> fash;
+        type_fash k1;
+        k1.volume = 100;
+        fash.flat_hierarchy.push_back(k1);
+        auto l1 =  fash.getNodes(1);
+        ASSERT_EQ((l1.begin)->volume, k1.volume);
+        type_fash k2;
+        k2.volume = -1;
+        type_fash k3;
+        k3.volume = -2;
+        fash.flat_hierarchy.push_back(k2);
+        fash.flat_hierarchy.push_back(k3);
+        auto l2 =  fash.getNodes(2);
+        for (auto box = l2.begin; box != l2.end; ++box ) {
+            ASSERT_TRUE(box->volume == k2.volume || box->volume == k3.volume) << "Boxvolume was: " << box->volume ;
+        }
+    }
+}
 
+TEST (algorithm_testing /*test suite name*/, Rasterizer_StepSize /*test name*/) {
+    using namespace algorithm;
+    std::array<float,4> min_max = {0,0, 2, 2 * float(sqrt(2))};
+    Rasterizer<256> rasterizer(min_max);
+    auto [step_x, step_y] = rasterizer.step_sizes();
+    ASSERT_FLOAT_EQ(step_x, 0.0078431372549019607843137254902);
+    ASSERT_FLOAT_EQ(step_y, 0.01109187107743603959844461744478);
+}
+/// TODO: Make Test not that idotic, it did not help...
+TEST (algorithm_testing /*test suite name*/, Rasterizer_Insert /*test name*/) {
+    using namespace algorithm;
+    auto plane_points = Get_Points_on_Plane();
+    std::array<float,4> min_max = {0,0, 2, 2 * float(sqrt(2))};
+    Rasterizer<3> rasterizer(min_max);
+    for(auto& p2d : plane_points){
+        rasterizer.insert(p2d);
+    }
+    auto verity_matrix = Eigen::Matrix<uint32_t, 3, 3>::Ones();
+    auto grid = rasterizer.get_grid();
+//    ASSERT_EQ(verity_matrix, grid);
+}
+
+
+/*
+*  Counding is little weird, plane_point() starts is resversed, and eigen starts 0,0 at top
+*  x   0    0  | 0,1
+*  0   x    0  | 1,2
+*  x   x    x  | 0,2
+* 0,2  1,2  2,2
+ */
+std::tuple<algorithm::Rasterizer<3>, std::vector<Point2D>> GenerateRasterizer3x3(){
+
+    using namespace algorithm;
+    auto arrp = Get_Points_on_Plane();
+    std::vector<Point2D> plane_points(arrp.begin(), arrp.end());
+    plane_points.erase(plane_points.cbegin() + 7);
+    plane_points.erase(plane_points.cbegin() + 5);
+    plane_points.erase(plane_points.cbegin() + 2);
+    plane_points.erase(plane_points.cbegin() + 1);
+    std::array<float,4> min_max = {0,0, 2, 2 * float(sqrt(2))};
+    Rasterizer<3> rasterizer(min_max);
+    for(auto& p2d : plane_points){
+        rasterizer.insert(p2d);
+    }
+    return {rasterizer, plane_points};
+}
+
+TEST (algorithm_testing /*test suite name*/, get_first_and_last_slot /*test name*/) {
+
+    auto [rasterizer, _] = GenerateRasterizer3x3();
+    const auto test_points_x = (MatrixXu(2,3) <<  0, 1, 2, 2, 2, 2).finished();
+    auto res_x = rasterizer.get_first_and_last_slot<direction_ex>();
+    ASSERT_EQ(test_points_x, res_x);
+
+    const auto test_points_y = (MatrixXu(2,3) <<  0, 1, 0, 0, 1, 2).finished();
+    auto res_y = rasterizer.get_first_and_last_slot<direction_ey>();
+    ASSERT_EQ(test_points_y, res_y);
+}
+
+TEST (algorithm_testing /*test suite name*/, min_split_rasterized /*test name*/) {
+    auto [rasterizer, _] = GenerateRasterizer3x3();
+    auto msr_ex = rasterizer.min_split_rasterized<direction_ex>();
+    auto msr_ey = rasterizer.min_split_rasterized<direction_ey>();
+    ASSERT_EQ(msr_ex.index, 2);
+    ASSERT_EQ(msr_ey.index, 0);
+}
+
+/*  3 x 7
+ *  0 0 0 0 1 1 1
+ *  0 0 0 0 1 1 1
+ *  0 1 1 1 1 1 0
+ */
+TEST (algorithm_testing /*test suite name*/, min_split_rasterized2 /*test name*/) {
+
+    using namespace algorithm;
+    std::array<Point2D, 11> more_test_points = {{
+        {1,0}, {2,0}, {3,0}, {4,0}, {5,0},
+        {4,1}, {5,1}, {6,1},
+        {4,2}, {5,2}, {6,2},
+    }};
+    std::array<float,4> min_max = {1,0, 6, 2};
+    Rasterizer<6> rasterizer(min_max);
+    for(auto& p2d : more_test_points){
+        rasterizer.insert(p2d);
+    }
+
+    auto msr_ex = rasterizer.min_split_rasterized<direction_ex>();
+    auto msr_ey = rasterizer.min_split_rasterized<direction_ey>();
+    ASSERT_EQ(msr_ex.index, 2);
+    ASSERT_EQ(msr_ey.index, 0);
 }
