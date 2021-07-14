@@ -8,6 +8,7 @@
 #include "typedefs.h"
 #include <CGAL/Polygon_mesh_processing/IO/polygon_mesh_io.h>
 #include <CGAL/Surface_mesh.h>
+#include <CGAL/IO/write_off_points.h>
 #include "data.h"
 #include <string>
 
@@ -218,14 +219,41 @@ TEST (algorithm_testing /*test suite name*/, decompose3D/*test name*/) {
         ASSERT_TRUE(false) << "Testfile not found.";
     }
     pointcloud_xyzc points;
-    for (const auto &v : vertices(sm)){
+    for (const auto &v : vertices(sm)) {
         points.push_back(std::make_tuple(sm.point(v), 0));
     }
 
-    mvbb::decompose3D(points, &mvbb, 0);
 
+//    std::filesystem::path t0("./tree0.off");
+//
+//    if(!CGAL::IO::write_OFF(t0, points,  CGAL::parameters::point_map(boxy::Point_map()).stream_precision(4))){
+//        ASSERT_TRUE(false) << "tree0 was not written, not sure why, maybe check path: " << std::filesystem::current_path();
+//    }
+    uint32_t levels = 2;
+    auto tree = mvbb::decompose3D(points, &mvbb, levels - 1);
+    for (auto k = 0; k < levels; ++k) {
+        auto lvl_nodes = tree.getNodes(k);
+        for (auto sk = 0; sk < (lvl_nodes.end() - lvl_nodes.begin()); ++sk) {
+            std::filesystem::path cell_path_name(
+                    "./piggy_tree_lvl" + std::to_string(k) + "_" + std::to_string(sk) + ".off");
 
+            CGAL::Surface_mesh<Point> obb_sm;
+            auto obb_points = lvl_nodes[sk].bounding_box.vertices;
+            auto box = CGAL::make_hexahedron(obb_points[0], obb_points[1], obb_points[2], obb_points[3],
+                                  obb_points[4], obb_points[5], obb_points[6], obb_points[7], obb_sm);
+
+            if (!CGAL::IO::write_OFF(cell_path_name, obb_sm,
+                                     CGAL::parameters::stream_precision(6))) {
+                ASSERT_TRUE(false) << "tree0 was not written, not sure why, maybe check path: "
+                                   << std::filesystem::current_path();
+            }
+        }
+    }
 }
+
+
+
+
 
 //
 //TEST (algorithm_testing /*test suite name*/, Algo_MVBB /*test name*/) {

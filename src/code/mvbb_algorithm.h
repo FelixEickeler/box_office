@@ -237,11 +237,11 @@ namespace mvbb {
             else if(x > min_max2D[2]){
                 min_max2D[2] = x;
             }
-            if(y < min_max2D[0]){
-                min_max2D[1] = x;
+            if(y < min_max2D[1]){
+                min_max2D[1] = y;
             }
-            else if(y > min_max2D[2]){
-                min_max2D[3] = x;
+            else if(y > min_max2D[3]){
+                min_max2D[3] = y;
             }
         }
         return min_max2D;

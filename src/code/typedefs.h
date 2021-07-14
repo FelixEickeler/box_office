@@ -158,7 +158,7 @@ namespace boxy{
 //        using const_iterator = typename std::iterator_traits<TIterator>::const_iterator;
         TIterator begin() const { return _begin(); }
         TIterator end()   const { return _end(); }
-        typename std::iterator_traits<TIterator>::reference operator[](std::size_t index) { return this->begin_[index]; }
+        typename std::iterator_traits<TIterator>::reference operator[](std::size_t index) { return _begin[index]; }
     };
 
     struct BestGridSplit{
