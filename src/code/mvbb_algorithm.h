@@ -25,6 +25,8 @@ namespace mvbb {
         BBox bounding_box;
         float volume{};
         VectorView<typename Tpointcloud::const_iterator> elements;
+
+        explicit FitAndSplitNode(BBox _bounding_box) : bounding_box(_bounding_box) {}
     };
 
     template<class TNodeType>
@@ -186,18 +188,18 @@ namespace mvbb {
         public:
             virtual ~Algo_Base () {};
             using iterator = typename TPointCloudType::iterator;
-            virtual BBox fit_bounding_box(TPointCloudType& points3D) = 0;  // This method is not implemented in the base class, making it a pure virtual method. Subclasses must implement it
+            virtual BBox fit_bounding_box(TPointCloudType& points3D) const = 0;  // This method is not implemented in the base class, making it a pure virtual method. Subclasses must implement it
         };
 
     template<class TPointCloudType>
-    class Algo_MVBB : Algo_Base<TPointCloudType>{
+    class Algo_MVBB : public Algo_Base<TPointCloudType>{
         public:
             ~Algo_MVBB()= default;
-            BBox fit_bounding_box(TPointCloudType& points3D);
+            BBox fit_bounding_box(TPointCloudType& points3D) const;
     };
 
     template<class TPointCloudType>
-    BBox Algo_MVBB<TPointCloudType>::fit_bounding_box(TPointCloudType& points3D) {
+    BBox Algo_MVBB<TPointCloudType>::fit_bounding_box(TPointCloudType& points3D) const {
         BBox tmp;
         // TODO figure out how to generate pass the view to the oriented_bounding_box
         boxy::VectorView input(points3D.begin(), points3D.end());
@@ -246,32 +248,32 @@ namespace mvbb {
     }
 
     template<class TPointCloudType>
-    void decompose3D(TPointCloudType points3D, BoundingBoxAlgorithm algorithm, uint32_t kappa){
-        std::unique_ptr<Algo_Base<TPointCloudType>> bbox_algorithm;
-        switch(algorithm){
-            case BoundingBoxAlgorithm::MVBB:
-                bbox_algorithm = new Algo_MVBB<TPointCloudType>();
-                break;
-
-//            case BoundingBoxAlgorithm::PCA:
-//                bbox_algorithm = new Algo_PCA<TPointCloudType>();
+    FitAndSplitHierarchy<FitAndSplitNode<TPointCloudType>> decompose3D(TPointCloudType& points3D, Algo_Base <TPointCloudType>* const bbox_algorithm, uint32_t kappa){
+//        std::unique_ptr<Algo_Base<TPointCloudType>> bbox_algorithm;
+//        switch(algorithm){
+//            case BoundingBoxAlgorithm::MVBB:
+//                bbox_algorithm = new Algo_MVBB<TPointCloudType>();
 //                break;
-        }
+//
+////            case BoundingBoxAlgorithm::PCA:
+////                bbox_algorithm = new Algo_PCA<TPointCloudType>();
+////                break;
+//        }
 
-        auto initial_bbox = bbox_algorithm(points3D);
-        FitAndSplitHierarchy<TPointCloudType> tree;
-        tree.flat_hierachry.emplace(initial_bbox);
+        auto initial_bbox = bbox_algorithm->fit_bounding_box(points3D);
+        FitAndSplitHierarchy<FitAndSplitNode<TPointCloudType>> tree;
+        tree.flat_hierarchy.emplace_back(initial_bbox);
 
         for(auto depth=0; depth<kappa; ++depth){
             auto all_parents =  tree.getNodes(depth);
-            std::for_each(all_parents.cbegin(), all_parents.cend(),
-            [points3D, tree, bbox_algorithm](auto fas_node){
+            std::for_each(all_parents.begin(), all_parents.end(),
+            [&points3D, &tree, bbox_algorithm](auto& fas_node){
                 auto bbox = fas_node.bounding_box;
                 std::array<BestSplit, 6> all_splits;
                 // A=0; B=1; C=2 => see typdef::BoxFaces;
                 // calculate each split for evey direction on evey face 3 faces x 2
                 for(auto face=0; face < 3; ++face){
-                    auto projection_plane = bbox.get_face(static_cast<boxy::BoxFaces>(face));
+                    auto projection_plane = bbox.get_plane(static_cast<boxy::BoxFaces>(face));
                     auto coordinate_system2D = bbox.get_plane_coordinates2D(static_cast<boxy::BoxFaces>(face));
                     Rasterizer<256> grid(minmax2D(bbox, coordinate_system2D));
 
@@ -279,9 +281,9 @@ namespace mvbb {
                     projected_2D.reserve(points3D.size());
 
                     // project, change coordinate system and rasterize !
-                    std::for_each(points3D.cbegin(), points3D.cend(), [projection_plane, coordinate_system2D, grid](const auto& point){
-                        auto proj = projection_plane.projection(point); //project to plane (3D)
-                        auto point2d =  coordinate_system2D.project(proj); //project to plane (2D) & new coordinate system
+                    std::for_each(points3D.cbegin(), points3D.cend(), [projection_plane, coordinate_system2D, &grid](const auto& point){
+                        auto proj = projection_plane.projection(std::get<0>(point)); //project to plane (3D)
+                        auto point2d =  coordinate_system2D.project_onto_plane(proj); //project to plane (2D) & new coordinate system
                         //care not threading safe
                         grid.insert(point2d);
                     });
@@ -296,27 +298,32 @@ namespace mvbb {
                                                  return a.area < b.area;
                                              } );
 
-                auto selected_face = static_cast<uint8_t>(best_split - all_splits.begin());
-                auto projection_plane = bbox.get_face(static_cast<boxy::BoxFaces>(selected_face));
+                auto selected_face = static_cast<boxy::BoxFaces>(best_split - all_splits.begin());
+                Plane_3 projection_plane = bbox.get_plane(selected_face);
                 // this could be omited as its only created for one call;
-                auto coordinate_system2D = bbox.get_plane_coordinates2D(static_cast<boxy::BoxFaces>(selected_face));
-                auto fulcrum = coordinate_system2D.project_to_global(best_split.coordinate);
-                Plane_3 cutting_plane(fulcrum, projection_plane.orthogonal_vector);
+                auto coordinate_system2D = bbox.get_plane_coordinates2D(selected_face);
+                auto fulcrum = coordinate_system2D.project_to_global(best_split->coordinate);
+
+                auto ovec = projection_plane.orthogonal_vector();
+                Plane_3 cutting_plane(fulcrum, ovec);
 
                 // split and fit new boxes
                 // TODO Move this inside FitAndSplitHierachy !
-                auto second_bbox_begins_at = std::partition(points3D.cbegin(), points3D.cend(),
-                                                         [cutting_plane](auto& point){cutting_plane.has_on_negative_side(point);});
+                auto second_bbox_begins_at = std::partition(points3D.begin(), points3D.end(),
+                                     [cutting_plane](auto& point){return cutting_plane.has_on_negative_side(std::get<0>(point));});
 
-
-                BBox bbox1 = bbox_algorithm.fit_bounding_box(points3D.begin(), second_bbox_begins_at);
-                BBox bBox2 = bbox_algorithm.fit_bounding_box(second_bbox_begins_at, points3D.end());
+                // TODO use ranges !!!
+                TPointCloudType vector_bbox1(points3D.begin(), second_bbox_begins_at);
+                BBox bbox1 = bbox_algorithm->fit_bounding_box(vector_bbox1);
+                TPointCloudType vector_bbox2(second_bbox_begins_at, points3D.end());
+                BBox bBox2 = bbox_algorithm->fit_bounding_box(vector_bbox2);
 
                 // update tree
-                tree.flat_hierachry.emplace(bbox1);
-                tree.flat_hierachry.emplace(bBox2);
+                tree.flat_hierarchy.emplace_back(bbox1);
+                tree.flat_hierarchy.emplace_back(bBox2);
             });
         }
+        return tree;
     }
 };
 

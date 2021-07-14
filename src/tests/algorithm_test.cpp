@@ -16,14 +16,14 @@ TEST (algorithm_testing /*test suite name*/, FitAndSplitHirachy /*test name*/) {
         using namespace mvbb;
         using type_fash =  FitAndSplitNode<pointcloud_xyzc>;
         FitAndSplitHierarchy<type_fash> fash;
-        type_fash k1;
+        type_fash k1(BBox{});
         k1.volume = 100;
         fash.flat_hierarchy.push_back(k1);
         auto l1 =  fash.getNodes(1);
         ASSERT_EQ((l1.begin())->volume, k1.volume);
-        type_fash k2;
+        type_fash k2(BBox{});
         k2.volume = -1;
-        type_fash k3;
+        type_fash k3(BBox{});
         k3.volume = -2;
         fash.flat_hierarchy.push_back(k2);
         fash.flat_hierarchy.push_back(k3);
@@ -171,21 +171,59 @@ TEST (algorithm_testing /*test suite name*/, min_split_2 /*test name*/) {
 
 TEST (algorithm_testing /*test suite name*/, Algo_MVBB/*test name*/) {
     mvbb::Algo_MVBB<pointcloud_xyzc> algo;
-    std::filesystem::path filename("../../tests/data/pig.off");
+    std::filesystem::path source_pig("../../tests/data/pig.off");
+    std::filesystem::path proof_piggybox("../../tests/data/pig_bbox.off");
     CGAL::Surface_mesh<Point> sm;
-    if (!CGAL::Polygon_mesh_processing::IO::read_polygon_mesh(filename, sm) || sm.is_empty()) {
+    if (!CGAL::Polygon_mesh_processing::IO::read_polygon_mesh(source_pig, sm) || sm.is_empty()) {
         ASSERT_TRUE(false) << "Testfile not found.";
+    }
+    CGAL::Surface_mesh<Point> proof;
+    if (!CGAL::Polygon_mesh_processing::IO::read_polygon_mesh(proof_piggybox, proof) || proof.is_empty()) {
+        ASSERT_TRUE(false) << "Prooffile not found.";
     }
 
     pointcloud_xyzc points;
     for (const auto &v : vertices(sm)){
         points.push_back(std::make_tuple(sm.point(v), 0));
     }
+
+    BBox proof_bbox;
+    auto idx = 0;
+    for(const auto& v : vertices(proof)) {
+        proof_bbox.vertices[idx] = proof.point(v);
+        ++idx;
+    }
     auto bbox = algo.fit_bounding_box(points);
-//    for(auto& p : bbox.vertices){
-//        EXPECT_TRUE(false) << p.x() << ", " << p.y() << ", " << p.z() << "\n ";
+    ASSERT_NEAR(bbox.volume(), proof_bbox.volume(), 0.01);
+
+    // this make very differnt bounding boxes
+//    for(auto i=0; i < bbox.vertices.size(); ++i){
+//        ASSERT_NEAR(proofv[i].x(), bbox.vertices[i].x(), 0.01)  << "i: " << i;
+//        ASSERT_NEAR(proofv[i].y(), bbox.vertices[i].y(), 0.01)  << "i: " << i;
+//        ASSERT_NEAR(proofv[i].z(), bbox.vertices[i].z(), 0.01)  << "i: " << i;
 //    }
-    ASSERT_TRUE(false) << "May be true, but not evaluated";
+//    ASSERT_TRUE(false) << "May be true, but not evaluated";
+
+}
+
+TEST (algorithm_testing /*test suite name*/, Algo_PCA/*test name*/) {
+    ASSERT_TRUE(false) << "Not implmented yet";
+}
+
+TEST (algorithm_testing /*test suite name*/, decompose3D/*test name*/) {
+    mvbb::Algo_MVBB<pointcloud_xyzc> mvbb;
+    std::filesystem::path source_pig("../../tests/data/pig.off");
+    CGAL::Surface_mesh<Point> sm;
+    if (!CGAL::Polygon_mesh_processing::IO::read_polygon_mesh(source_pig, sm) || sm.is_empty()) {
+        ASSERT_TRUE(false) << "Testfile not found.";
+    }
+    pointcloud_xyzc points;
+    for (const auto &v : vertices(sm)){
+        points.push_back(std::make_tuple(sm.point(v), 0));
+    }
+
+    mvbb::decompose3D(points, &mvbb, 0);
+
 
 }
 

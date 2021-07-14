@@ -132,6 +132,10 @@ namespace boxy{
                     }
                     return min_max;
                 }
+
+                [[nodiscard]] float volume() const{
+                    return abs(cross_product((vertices[1] - vertices[0]),(vertices[3] - vertices[0])) * (vertices[5] - vertices[0]));
+                }
     };
 
     // TODO Extract this to a Pybind Typedef i guess ?
