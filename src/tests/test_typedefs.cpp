@@ -3,7 +3,6 @@
 //
 #include "gtest/gtest.h"
 #include "typedefs.h"
-#include <array>
 #include "data.h"
 
 TEST (typdef_testing /*test suite name*/, Cgal2Eigen_Point3_Vector3f /*test name*/) {
@@ -103,8 +102,7 @@ TEST (typdef_testing /*test suite name*/, crange/*test name*/) {
     for(auto p : Get_CubePoints()){
         pc.push_back(std::make_tuple(p,0));
     }
-
-    boxy::crange<boxy::pointcloud_xyzc> cr {pc.begin(), pc.end()};
-    ASSERT_EQ(cr.begin, pc.begin());
-    ASSERT_EQ(cr.end, pc.end());
+    boxy::CMSRange<boxy::pointcloud_xyzc> cr(pc.cbegin(), pc.cend());
+    ASSERT_EQ(std::distance(cr.begin(), pc.cbegin()), 0);
+    ASSERT_EQ(std::distance(cr.end(), pc.cend()), 0);
 }

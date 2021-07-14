@@ -17,7 +17,7 @@ TEST (algorithm_testing /*test suite name*/, FitAndSplitHirachy /*test name*/) {
         k1.volume = 100;
         fash.flat_hierarchy.push_back(k1);
         auto l1 =  fash.getNodes(1);
-        ASSERT_EQ((l1.begin)->volume, k1.volume);
+        ASSERT_EQ((l1.begin())->volume, k1.volume);
         type_fash k2;
         k2.volume = -1;
         type_fash k3;
@@ -25,7 +25,7 @@ TEST (algorithm_testing /*test suite name*/, FitAndSplitHirachy /*test name*/) {
         fash.flat_hierarchy.push_back(k2);
         fash.flat_hierarchy.push_back(k3);
         auto l2 =  fash.getNodes(2);
-        for (auto box = l2.begin; box != l2.end; ++box ) {
+        for (auto box = l2.begin(); box != l2.end(); ++box ) {
             ASSERT_TRUE(box->volume == k2.volume || box->volume == k3.volume) << "Boxvolume was: " << box->volume ;
         }
     }
@@ -166,3 +166,7 @@ TEST (algorithm_testing /*test suite name*/, min_split_2 /*test name*/) {
     ASSERT_FLOAT_EQ(ms_ey.area, 8);
 }
 
+
+TEST (algorithm_testing /*test suite name*/, Algo_MVBB /*test name*/) {
+
+}

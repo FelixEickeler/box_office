@@ -140,9 +140,22 @@ namespace boxy{
     using Path = std::filesystem::path;
 
     template<typename T>
-    struct crange{
-        typename T::const_iterator begin;
-        typename T::const_iterator end;
+    class CMSRange{
+        using constit = typename T::const_iterator;
+        constit _begin;
+        constit _end;
+
+        public:
+            CMSRange(constit _begin, constit _end)  : _begin(_begin), _end(_end){}
+            CMSRange()= default;
+
+            const constit begin() const{
+                return _begin;
+            }
+
+            const constit end() const{
+                return _end;
+            }
     };
 
     struct BestGridSplit{

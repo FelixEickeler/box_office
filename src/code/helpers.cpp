@@ -3,9 +3,9 @@
 //
 #include "helpers.h"
 
-np_array helpers::xyzc_2_numpy(crange<pointcloud_xyzc>objr) {
+np_array helpers::xyzc_2_numpy(CMSRange<pointcloud_xyzc>objr) {
     pointcloud_xyzc partial_cloud;
-    std::copy(objr.begin, objr.end,back_inserter(partial_cloud));
+    std::copy(objr.begin(), objr.end(),back_inserter(partial_cloud));
     return xyzc_2_numpy(partial_cloud);
 }
 

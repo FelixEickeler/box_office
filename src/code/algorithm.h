@@ -7,6 +7,9 @@
 #include "typedefs.h"
 #include <functional>
 #include <algorithm>
+#include <CGAL/optimal_bounding_box.h>
+#include <CGAL/Simple_cartesian.h>
+#include <CGAL/bounding_box.h>
 
 using namespace boxy;
 const bool direction_ex = false;
@@ -19,13 +22,13 @@ namespace algorithm {
     struct FitAndSplitNode{
         BBox bounding_box;
         float volume{};
-        crange<Tpointcloud> elements;
+        CMSRange<Tpointcloud> elements;
     };
 
     template<class TNodeType>
     struct FitAndSplitHierarchy{
         std::vector<TNodeType> flat_hierarchy;
-        boxy::crange<std::vector<TNodeType>> getNodes(uint32_t kappa){
+        boxy::CMSRange<std::vector<TNodeType>> getNodes(uint32_t kappa){
             uint32_t start_index;
             uint32_t end_index;
             if(kappa > 1) {
@@ -38,7 +41,7 @@ namespace algorithm {
                 start_index = 0;
                 end_index = 1;
             }
-            return boxy::crange<std::vector<TNodeType>>{flat_hierarchy.begin() + start_index, flat_hierarchy.begin() + end_index};
+            return boxy::CMSRange<std::vector<TNodeType>>{flat_hierarchy.begin() + start_index, flat_hierarchy.begin() + end_index};
         }
     };
 
@@ -175,14 +178,43 @@ namespace algorithm {
 //    using Algo_MVBB = BBoxAlgo<BoundingBoxAlgorithm::MVBB>;
 //    using Algo_PCA = BBoxAlgo<BoundingBoxAlgorithm::MVBB>;
 
-    struct Algo_MVBB{};
-    struct Algo_PCA{};
 
     template<class TPointCloudType>
-    BBox fit_bounding_box(TPointCloudType points3D, Algo_MVBB algo);     // Declare, but don't define
+    class Algo_Base{
+        public:
+            virtual ~Algo_Base () = 0;
+            using iterator = typename TPointCloudType::iterator;
+            virtual BBox fit_bounding_box(iterator begin, iterator end) = 0;  // This method is not implemented in the base class, making it a pure virtual method. Subclasses must implement it
+        };
 
     template<class TPointCloudType>
-    BBox fit_bounding_box(TPointCloudType points3D, Algo_PCA algo);
+    class Algo_MVBB : Algo_Base<TPointCloudType>{
+        BBox fit_bounding_box(TPointCloudType& points3D);
+    };
+
+    template<class TPointCloudType>
+    BBox Algo_MVBB<TPointCloudType>::fit_bounding_box(TPointCloudType &points3D) {
+        BBox tmp;
+        CGAL::oriented_bounding_box(points3D, tmp.vertices,  CGAL::parameters::use_convex_hull(true).point_map(boxy::Point_map())); //CP::geom_traits(PPoint)
+        return tmp;
+    }
+
+    template<class TPointCloudType>
+    class Algo_PCA : Algo_Base<TPointCloudType>{
+//        BBox fit_bounding_box(TPointCloudType& points3D);
+    };
+//
+//    template<class TPointCloudType>
+//    BBox Algo_PCA<TPointCloudType>::fit_bounding_box(TPointCloudType &points3D) {
+//        // TODO: write test for pca fit
+//        BBox tmp;
+//        CGAL::Simple_cartesian<float>::Iso_cuboid_3 c3 = CGAL::bounding_box(points3D->begin(), points3D->end());
+//        for(auto i=0; i < 8; ++i){
+//            tmp.vertices[i] = c3.vertex(i);
+//        }
+//        return tmp;
+//    }
+
 
 
     std::array<float, 4> minmax2D(const BBox& bbox, const CoordinateSystem2D& coordinate_system2D) {
@@ -208,24 +240,26 @@ namespace algorithm {
 
     template<class TPointCloudType>
     void decompose3D(TPointCloudType points3D, BoundingBoxAlgorithm algorithm, uint32_t kappa){
-        std::function<BBox(TPointCloudType)> fit_bbox;
+//        std::function<BBox(TPointCloudType)> fit_bbox;
+        std::unique_ptr<Algo_Base<TPointCloudType>> bbox_algorithm;
         switch(algorithm){
             case BoundingBoxAlgorithm::MVBB:
-                fit_bbox = [](TPointCloudType pt3D){return fit_bounding_Box(pt3D, Algo_MVBB());};
+                bbox_algorithm = new Algo_MVBB<TPointCloudType>();
                 break;
+
             case BoundingBoxAlgorithm::PCA:
-                fit_bbox = [](TPointCloudType pt3D){return fit_bounding_Box(pt3D, Algo_PCA());};
+                bbox_algorithm = new Algo_PCA<TPointCloudType>();
                 break;
         }
 
-        auto initial_bbox = fit_bbox(points3D);
+        auto initial_bbox = bbox_algorithm(points3D);
         FitAndSplitHierarchy<TPointCloudType> tree;
         tree.flat_hierachry.emplace(initial_bbox);
 
         for(auto depth=0; depth<kappa; ++depth){
             auto all_parents =  tree.getNodes(depth);
             std::for_each(all_parents.cbegin(), all_parents.cend(),
-            [points3D, tree, fit_bbox](auto fas_node){
+            [points3D, tree, bbox_algorithm](auto fas_node){
                 auto bbox = fas_node.bounding_box;
                 std::array<BestSplit, 6> all_splits;
                 // A=0; B=1; C=2 => see typdef::BoxFaces;
@@ -269,13 +303,12 @@ namespace algorithm {
                                                          [cutting_plane](auto& point){cutting_plane.has_on_negative_side(point);});
 
 
-                BBox bbox1 = fit_bbox(TPointCloudType(points3D.begin(), second_bbox_begins_at));
-                BBox bBox2 = fit_bbox(TPointCloudType(second_bbox_begins_at, points3D.end()));
+                BBox bbox1 = bbox_algorithm.fit_bounding_box(points3D.begin(), second_bbox_begins_at);
+                BBox bBox2 = bbox_algorithm.fit_bounding_box(second_bbox_begins_at, points3D.end());
 
                 // update tree
                 tree.flat_hierachry.emplace(bbox1);
                 tree.flat_hierachry.emplace(bBox2);
-
             });
         }
     }
