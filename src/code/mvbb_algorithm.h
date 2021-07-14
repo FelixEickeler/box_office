@@ -10,25 +10,27 @@
 #include <CGAL/optimal_bounding_box.h>
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/bounding_box.h>
+#include <iterator>
+//#include <boost/range>
 
 using namespace boxy;
 const bool direction_ex = false;
 const bool direction_ey = true;
 
-namespace algorithm {
+namespace mvbb {
 
     //sexy
     template<typename Tpointcloud>
     struct FitAndSplitNode{
         BBox bounding_box;
         float volume{};
-        CMSRange<Tpointcloud> elements;
+        VectorView<typename Tpointcloud::const_iterator> elements;
     };
 
     template<class TNodeType>
     struct FitAndSplitHierarchy{
         std::vector<TNodeType> flat_hierarchy;
-        boxy::CMSRange<std::vector<TNodeType>> getNodes(uint32_t kappa){
+        boxy::VectorView<typename std::vector<TNodeType>::const_iterator> getNodes(uint32_t kappa){
             uint32_t start_index;
             uint32_t end_index;
             if(kappa > 1) {
@@ -41,7 +43,7 @@ namespace algorithm {
                 start_index = 0;
                 end_index = 1;
             }
-            return boxy::CMSRange<std::vector<TNodeType>>{flat_hierarchy.begin() + start_index, flat_hierarchy.begin() + end_index};
+            return boxy::VectorView(flat_hierarchy.cbegin() + start_index, flat_hierarchy.cbegin() + end_index);
         }
     };
 
@@ -182,27 +184,34 @@ namespace algorithm {
     template<class TPointCloudType>
     class Algo_Base{
         public:
-            virtual ~Algo_Base () = 0;
+            virtual ~Algo_Base () {};
             using iterator = typename TPointCloudType::iterator;
-            virtual BBox fit_bounding_box(iterator begin, iterator end) = 0;  // This method is not implemented in the base class, making it a pure virtual method. Subclasses must implement it
+            virtual BBox fit_bounding_box(TPointCloudType& points3D) = 0;  // This method is not implemented in the base class, making it a pure virtual method. Subclasses must implement it
         };
 
     template<class TPointCloudType>
     class Algo_MVBB : Algo_Base<TPointCloudType>{
-        BBox fit_bounding_box(TPointCloudType& points3D);
+        public:
+            ~Algo_MVBB()= default;
+            BBox fit_bounding_box(TPointCloudType& points3D);
     };
 
     template<class TPointCloudType>
-    BBox Algo_MVBB<TPointCloudType>::fit_bounding_box(TPointCloudType &points3D) {
+    BBox Algo_MVBB<TPointCloudType>::fit_bounding_box(TPointCloudType& points3D) {
         BBox tmp;
+        // TODO figure out how to generate pass the view to the oriented_bounding_box
+        boxy::VectorView input(points3D.begin(), points3D.end());
+//        boxy::CMSRange<TPointCloudType> input(points3D.cbegin(), points3D.cend());
+//        boost::range:: abc;
+//        (points3D.begin(), points3D.end());
         CGAL::oriented_bounding_box(points3D, tmp.vertices,  CGAL::parameters::use_convex_hull(true).point_map(boxy::Point_map())); //CP::geom_traits(PPoint)
         return tmp;
     }
-
-    template<class TPointCloudType>
-    class Algo_PCA : Algo_Base<TPointCloudType>{
-//        BBox fit_bounding_box(TPointCloudType& points3D);
-    };
+//
+//    template<class TPointCloudType>
+//    class Algo_PCA : Algo_Base<TPointCloudType>{
+//       BBox fit_bounding_box(TPointCloudType& points3D);
+//    };
 //
 //    template<class TPointCloudType>
 //    BBox Algo_PCA<TPointCloudType>::fit_bounding_box(TPointCloudType &points3D) {
@@ -214,8 +223,6 @@ namespace algorithm {
 //        }
 //        return tmp;
 //    }
-
-
 
     std::array<float, 4> minmax2D(const BBox& bbox, const CoordinateSystem2D& coordinate_system2D) {
         std::array<float, 4> min_max2D{1.0e10, -1.0e-10,1.0e-10,-1.0e-10};
@@ -240,16 +247,15 @@ namespace algorithm {
 
     template<class TPointCloudType>
     void decompose3D(TPointCloudType points3D, BoundingBoxAlgorithm algorithm, uint32_t kappa){
-//        std::function<BBox(TPointCloudType)> fit_bbox;
         std::unique_ptr<Algo_Base<TPointCloudType>> bbox_algorithm;
         switch(algorithm){
             case BoundingBoxAlgorithm::MVBB:
                 bbox_algorithm = new Algo_MVBB<TPointCloudType>();
                 break;
 
-            case BoundingBoxAlgorithm::PCA:
-                bbox_algorithm = new Algo_PCA<TPointCloudType>();
-                break;
+//            case BoundingBoxAlgorithm::PCA:
+//                bbox_algorithm = new Algo_PCA<TPointCloudType>();
+//                break;
         }
 
         auto initial_bbox = bbox_algorithm(points3D);

@@ -14,6 +14,7 @@
 #include <CGAL/Plane_3.h>
 #include <Eigen/Dense>
 #include <stdexcept>
+#include <iterator>
 
 namespace boxy{
     typedef CGAL::Simple_cartesian<float> Kernel;
@@ -139,23 +140,21 @@ namespace boxy{
     using objectlist = std::unordered_map<int, std::string>;
     using Path = std::filesystem::path;
 
-    template<typename T>
-    class CMSRange{
-        using constit = typename T::const_iterator;
-        constit _begin;
-        constit _end;
+    template<typename TIterator>
+    class VectorView{
+//        using constit = typename T::const_iterator;
+        TIterator _begin;
+        TIterator _end;
 
         public:
-            CMSRange(constit _begin, constit _end)  : _begin(_begin), _end(_end){}
-            CMSRange()= default;
-
-            const constit begin() const{
-                return _begin;
-            }
-
-            const constit end() const{
-                return _end;
-            }
+            VectorView(TIterator _begin, TIterator _end)  : _begin(_begin), _end(_end){}
+            VectorView()= default;
+        TIterator begin() {return _begin; }
+        TIterator end() {return _end;}
+//        using const_iterator = typename std::iterator_traits<TIterator>::const_iterator;
+        TIterator begin() const { return _begin(); }
+        TIterator end()   const { return _end(); }
+        typename std::iterator_traits<TIterator>::reference operator[](std::size_t index) { return this->begin_[index]; }
     };
 
     struct BestGridSplit{

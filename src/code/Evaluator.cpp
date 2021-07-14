@@ -96,10 +96,10 @@ boxy::objectlist MvbbEvaluator::get_objectlist() {
     return _objectlist;
 }
 
-boxy::CMSRange<pointcloud_xyzc> MvbbEvaluator::get_object(uint32_t object_id) const {
+boxy::VectorView<pointcloud_xyzc::const_iterator> MvbbEvaluator::get_object(uint32_t object_id) const {
     auto tmp_comp =  XYZC {Point(), object_id};
-    return CMSRange<pointcloud_xyzc>{std::lower_bound(_pointcloud.begin(), _pointcloud.end(), tmp_comp, helpers::xyzc_objecttype_compare),
-                         std::upper_bound(_pointcloud.begin(), _pointcloud.end(), tmp_comp, helpers::xyzc_objecttype_compare)};
+    return VectorView(std::lower_bound(_pointcloud.begin(), _pointcloud.end(), tmp_comp, helpers::xyzc_objecttype_compare),
+                      std::upper_bound(_pointcloud.begin(), _pointcloud.end(), tmp_comp, helpers::xyzc_objecttype_compare));
 }
 
 boxy::BBox MvbbEvaluator::bounding_box() const { //pointcloud_xyzc input

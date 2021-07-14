@@ -3,14 +3,17 @@
 //
 
 #include "gtest/gtest.h"
-#include "algorithm.h"
+#include "mvbb_algorithm.h"
 #include <algorithm>
 #include "typedefs.h"
+#include <CGAL/Polygon_mesh_processing/IO/polygon_mesh_io.h>
+#include <CGAL/Surface_mesh.h>
 #include "data.h"
+#include <string>
 
 TEST (algorithm_testing /*test suite name*/, FitAndSplitHirachy /*test name*/) {
     {
-        using namespace algorithm;
+        using namespace mvbb;
         using type_fash =  FitAndSplitNode<pointcloud_xyzc>;
         FitAndSplitHierarchy<type_fash> fash;
         type_fash k1;
@@ -32,7 +35,7 @@ TEST (algorithm_testing /*test suite name*/, FitAndSplitHirachy /*test name*/) {
 }
 
 TEST (algorithm_testing /*test suite name*/, Rasterizer_StepSize /*test name*/) {
-    using namespace algorithm;
+    using namespace mvbb;
     std::array<float,4> min_max = {0,0, 2, 2 * float(sqrt(2))};
     Rasterizer<256> rasterizer(min_max);
     auto [step_x, step_y] = rasterizer.step_sizes();
@@ -41,7 +44,7 @@ TEST (algorithm_testing /*test suite name*/, Rasterizer_StepSize /*test name*/) 
 }
 /// TODO: Make Test not that idotic, it did not help...
 TEST (algorithm_testing /*test suite name*/, Rasterizer_Insert /*test name*/) {
-    using namespace algorithm;
+    using namespace mvbb;
     auto plane_points = Get_Points_on_Plane();
     std::array<float,4> min_max = {0,0, 2, 2 * float(sqrt(2))};
     Rasterizer<3> rasterizer(min_max);
@@ -61,9 +64,9 @@ TEST (algorithm_testing /*test suite name*/, Rasterizer_Insert /*test name*/) {
 *  x   x    x  | 0,2
 * 0,2  1,2  2,2
  */
-std::tuple<algorithm::Rasterizer<3>, std::vector<Point2D>> GenerateRasterizer3x3(){
+std::tuple<mvbb::Rasterizer<3>, std::vector<Point2D>> GenerateRasterizer3x3(){
 
-    using namespace algorithm;
+    using namespace mvbb;
     auto arrp = Get_Points_on_Plane();
     std::vector<Point2D> plane_points(arrp.begin(), arrp.end());
     plane_points.erase(plane_points.cbegin() + 7);
@@ -114,8 +117,8 @@ TEST (algorithm_testing /*test suite name*/, best_split_rasterized /*test name*/
  *   0 0 0 1 1 1
  *
  */
-std::tuple<algorithm::Rasterizer<6>, std::vector<Point2D>> GenerateRasterizer3x7(){
-    using namespace algorithm;
+std::tuple<mvbb::Rasterizer<6>, std::vector<Point2D>> GenerateRasterizer3x7(){
+    using namespace mvbb;
     std::vector<Point2D> more_test_points = {{
             {1,0}, {2,0}, {3,0}, {4,0}, {5,0},
             {4,1}, {5,1}, {6,1},
@@ -141,7 +144,7 @@ TEST (algorithm_testing /*test suite name*/, get_first_and_last_slot2 /*test nam
 
 
 TEST (algorithm_testing /*test suite name*/, min_split_rasterized2 /*test name*/) {
-    using namespace algorithm;
+    using namespace mvbb;
     auto [rasterizer, _]  = GenerateRasterizer3x7();
     auto msr_ex = rasterizer.best_split_rasterized<direction_ex>();
     auto msr_ey = rasterizer.best_split_rasterized<direction_ey>();
@@ -153,7 +156,7 @@ TEST (algorithm_testing /*test suite name*/, min_split_rasterized2 /*test name*/
 
 /// Translate back to 3x7 grid;
 TEST (algorithm_testing /*test suite name*/, min_split_2 /*test name*/) {
-    using namespace algorithm;
+    using namespace mvbb;
     auto [rasterizer, _]  = GenerateRasterizer3x7();
     auto ms_ex = rasterizer.best_split<direction_ex>();
     auto ms_ey = rasterizer.best_split<direction_ey>();
@@ -166,7 +169,27 @@ TEST (algorithm_testing /*test suite name*/, min_split_2 /*test name*/) {
     ASSERT_FLOAT_EQ(ms_ey.area, 8);
 }
 
+TEST (algorithm_testing /*test suite name*/, Algo_MVBB/*test name*/) {
+    mvbb::Algo_MVBB<pointcloud_xyzc> algo;
+    std::filesystem::path filename("../../tests/data/pig.off");
+    CGAL::Surface_mesh<Point> sm;
+    if (!CGAL::Polygon_mesh_processing::IO::read_polygon_mesh(filename, sm) || sm.is_empty()) {
+        ASSERT_TRUE(false) << "Testfile not found.";
+    }
 
-TEST (algorithm_testing /*test suite name*/, Algo_MVBB /*test name*/) {
+    pointcloud_xyzc points;
+    for (const auto &v : vertices(sm)){
+        points.push_back(std::make_tuple(sm.point(v), 0));
+    }
+    auto bbox = algo.fit_bounding_box(points);
+//    for(auto& p : bbox.vertices){
+//        EXPECT_TRUE(false) << p.x() << ", " << p.y() << ", " << p.z() << "\n ";
+//    }
+    ASSERT_TRUE(false) << "May be true, but not evaluated";
 
 }
+
+//
+//TEST (algorithm_testing /*test suite name*/, Algo_MVBB /*test name*/) {
+//
+//}

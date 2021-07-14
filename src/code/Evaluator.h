@@ -26,7 +26,7 @@ class MvbbEvaluator{
     boxy::Path _objectlist_src = "";
     boxy::pointcloud_xyzc _pointcloud;
     boxy::objectlist _objectlist;
-    std::string hash_key = "";
+    std::string hash_key;
 
     public:
         MvbbEvaluator();
@@ -40,7 +40,7 @@ class MvbbEvaluator{
         boxy::BBox bounding_box() const;
         boxy::np_array get_pointcloud();
         boxy::objectlist get_objectlist();
-        boxy::CMSRange<boxy::pointcloud_xyzc> get_object(uint32_t object_id) const;
+        boxy::VectorView<boxy::pointcloud_xyzc::const_iterator> get_object(uint32_t object_id) const;
 };
 
 

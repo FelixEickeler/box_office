@@ -35,7 +35,7 @@ Do not forget to shutdown the docker after use with docker-compose down
 * write tests (c++) 
     * typdef tests
     * data loading 
-    * isolated parts of the algorithm
+    * isolated parts of the mvbb
     * maybe even integration
     
 * write interface definitions to python

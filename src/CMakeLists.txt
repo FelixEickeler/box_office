@@ -23,6 +23,10 @@ if(NOT TARGET CGAL::Eigen3_support)
     return()
 endif()
 
+# Boost
+#find_package( Boost REQUIRED COMPONENTS ranges)
+#include_directories( ${Boost_INCLUDE_DIRS} )
+
 add_subdirectory(code)
 option(PACKAGE_TESTS "Build the tests" ON)
 if(PACKAGE_TESTS)

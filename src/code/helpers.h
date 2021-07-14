@@ -17,7 +17,7 @@ namespace  helpers {
     // TODO fix to iterators to avoid copy before, also make these in a pybind file !
     np_array xyzc_2_numpy(const pointcloud_xyzc &pointcloud);
 
-    np_array xyzc_2_numpy(CMSRange<pointcloud_xyzc> objr);
+    np_array xyzc_2_numpy(VectorView<pointcloud_xyzc::iterator> objr);
 
     np_array bbox_2_numpy(BBox bbox);
 
