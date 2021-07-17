@@ -2,6 +2,7 @@
 // Created by felix on 12.06.2021.
 //
 #include "helpers.h"
+#include "helpers_nobind.h"
 
 np_array helpers::xyzc_2_numpy(VectorView<pointcloud_xyzc::iterator>objr) {
     pointcloud_xyzc partial_cloud;
@@ -73,3 +74,4 @@ np_array helpers::bbox_2_numpy(BBox bbox) {
     }
     return numpy_bbox;
 }
+

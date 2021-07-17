@@ -9,7 +9,10 @@
 #include <string>
 #include <fstream>
 #include <experimental/string>
+#include <CGAL/Surface_mesh.h>
 #include "trim.h"
+#include <CGAL/IO/write_off_points.h>
+
 using namespace boxy;
 
 namespace  helpers {

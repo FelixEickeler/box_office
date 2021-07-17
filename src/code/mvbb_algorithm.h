@@ -1,21 +1,30 @@
 //
 // Created by felix on 18.06.2021.
 //
-
+#define GTEST_COUT std::cerr << "[          ] [ INFO ]"
 #ifndef TEST_BIND_ALGORITHM_H
 #define TEST_BIND_ALGORITHM_H
 #include "typedefs.h"
+#include "helpers.h"
+#include "helpers_nobind.h"
+#include "rasterizer..h"
 #include <functional>
 #include <algorithm>
 #include <CGAL/optimal_bounding_box.h>
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/bounding_box.h>
 #include <iterator>
+#include <fstream>
+#include <CGAL/IO/write_off_points.h>
+#include <CGAL/Surface_mesh.h>
+#include <CGAL/Origin.h>
+
 //#include <boost/range>
 
 using namespace boxy;
 const bool direction_ex = false;
 const bool direction_ey = true;
+
 
 namespace mvbb {
 
@@ -24,9 +33,10 @@ namespace mvbb {
     struct FitAndSplitNode{
         BBox bounding_box;
         float volume{};
-        VectorView<typename Tpointcloud::const_iterator> elements;
+        VectorView<typename Tpointcloud::iterator> points;
 
-        explicit FitAndSplitNode(BBox _bounding_box) : bounding_box(_bounding_box) {}
+        explicit FitAndSplitNode(BBox _bounding_box) : bounding_box(_bounding_box){}
+        explicit FitAndSplitNode(BBox _bounding_box, typename Tpointcloud::iterator begin, typename Tpointcloud::iterator end) : bounding_box(_bounding_box), points(begin, end){}
     };
 
     template<class TNodeType>
@@ -35,11 +45,11 @@ namespace mvbb {
         boxy::VectorView<typename std::vector<TNodeType>::const_iterator> getNodes(uint32_t kappa){
             uint32_t start_index;
             uint32_t end_index;
-            if(kappa > 1) {
-                kappa -= 1; // shift1
+            if(kappa >= 1) {
+//                kappa -= 1; // shift1
                 uint32_t nr_bboxes = 1 << kappa;
-                start_index = nr_bboxes;
-                end_index = start_index * 2 - 1;
+                start_index = nr_bboxes-1;
+                end_index = start_index+ nr_bboxes;
             }
             else{
                 start_index = 0;
@@ -49,132 +59,10 @@ namespace mvbb {
         }
     };
 
-    template<size_t TRaster>
-    class Rasterizer{
-        MatrixXu grid = MatrixXu::Zero(TRaster, TRaster);
-//        Eigen::Matrix<uint32_t ,TRaster,TRaster> grid = Eigen::Matrix<uint32_t, TRaster,TRaster>::Zero();//(TRaster, TRaster);
-
-        std::array<float, 4> min_max;
-        float step_x;
-        float step_y;
-
-        public:
-            explicit Rasterizer(std::array<float,4> _min_max) : min_max{_min_max},
-                                                    step_x{(_min_max[2]-min_max[0])/(TRaster-1)},
-                                                    step_y{(_min_max[3]-min_max[1])/(TRaster-1)}{ }
-
-            [[nodiscard]] size_t raster() const{
-                    return TRaster;
-                }
-
-            [[nodiscard]] std::tuple<float, float> step_sizes() const{
-                return {step_x, step_y};
-            }
-
-            [[nodiscard]] const auto& get_grid() const{
-                return grid;
-            }
-
-            void insert(Point2D point2D){
-                auto x_coord = static_cast<uint32_t>((point2D.x() - min_max[0]) / step_x);
-                auto y_coord = static_cast<uint32_t>((point2D.y() - min_max[1]) / step_y);
-                grid(y_coord, x_coord) += 1;
-            }
-
-            /// This method returns a vector of spans represneting the occupoied space of the grid.
-            /// It will be either provide these as column : direciton_x(false)  or row : direction_y(true) represntations
-            /// \tparam TDirection :  true for row; false for column
-            /// \return Eigen::Vector2i<TRaster : v(n,0) start of the span and v(n,1) end of it
-           template<bool TDirection>
-           auto get_first_and_last_slot(){
-                MatrixXu _span = MatrixXu::Zero(2, TRaster);
-
-               for(auto i=0; i < TRaster; ++i){
-                   bool first_set = false;
-                   for(auto j=0; j < TRaster; ++j){
-                        if constexpr(TDirection){
-                           if(grid(i, j) != 0){
-                               if(!first_set){
-                                   _span(0, i) = j;
-                                   first_set = true;
-                               }
-                               _span(1, i) = j+1;
-                            }
-                        }
-                        else{
-                            if(grid(j, i) != 0){
-                                if(!first_set){
-                                    _span(0, i) = j;
-                                    first_set = true;
-                                }
-                                _span(1, i) = j+1;
-                            }
-                        }
-                   }
-                }
-               return _span;
-            }
-
-
-            /// This method is calculating the splits on the grid of the rasterizer. It is not transformed in an overall coordinate system !
-            /// \tparam TDirection :  true for row; false for column
-            /// \return BestGridSplit : rasterized position, no global space !
-           template <bool TDirection>
-           auto best_split_rasterized(){
-              auto slot_sizes = get_first_and_last_slot<TDirection>();
-              MatrixXu zero_stopper = (slot_sizes.row(1).array() == 0).template cast<uint32_t>()*UINT32_MAX;
-              zero_stopper += slot_sizes.row(0);
-              Eigen::Matrix<uint32_t, 2, 2> bbox_boundaries = Eigen::Matrix<uint32_t, 2,2>::Zero();
-
-               auto min_area = UINT32_MAX;
-               uint32_t idx_min_area = 0;
-//               auto test = slot_sizes.block(0,0,2,TRaster);
-
-
-               // cut between 0 and 1 of grid, last row does not after
-               for(auto idx=0; idx < slot_sizes.cols()-1; ++idx){
-                   uint32_t wbbox2 = TRaster-idx-1;
-                   if(bbox_boundaries(0,0) > slot_sizes(0,idx)) bbox_boundaries(0,0) = slot_sizes(0,idx);
-                   if(bbox_boundaries(1,0) < slot_sizes(1,idx)) bbox_boundaries(1,0) = slot_sizes(1,idx);
-
-                   // only evaluate non zero:zero columns, for minimum => zero_stopper!
-                   bbox_boundaries(0,1) = zero_stopper.topRightCorner(1,wbbox2).minCoeff();
-                   bbox_boundaries(1,1) = slot_sizes.bottomRightCorner(1,wbbox2).maxCoeff();
-
-                   auto area = (idx+1) * (bbox_boundaries(1,0) -  bbox_boundaries(0,0))+
-                           wbbox2 * (bbox_boundaries(1,1) -  bbox_boundaries(0,1));
-
-                   if(area < min_area){
-                       min_area = area;
-                       idx_min_area = idx;
-                   }
-               }
-               return BestGridSplit{min_area, idx_min_area};
-           }
-
-            // direction 0 => first orientation, direction true(1) => second orientation:
-            // This is a little hacky but is my first constexpr !
-            // Ah btw this is not transformed in the a real coordinate system (e.g. cutting plane)
-            template<bool TDirection>
-            BestSplit best_split(){
-                auto bgs = best_split_rasterized<TDirection>();
-                float cell_area = step_x * step_y;
-
-                Vector2f cutting_point;
-                if constexpr (TDirection){ // true being direction_ey
-                    cutting_point << 0, (bgs.index+1) * step_y + min_max[1];
-                }
-                else{
-                    cutting_point << (bgs.index+1) * step_x + min_max[0], 0;
-                }
-                return BestSplit{bgs.area * cell_area, cutting_point};
-            }
-    };
-
 
 //    void best_split_search(grid);
 
-    enum BoundingBoxAlgorithm { MVBB, PCA };
+//    enum BoundingBoxAlgorithm { MVBB, PCA };
 //
 //    template<BoundingBoxAlgorithm TAlgo>
 //    struct BBoxAlgo{};
@@ -249,78 +137,145 @@ namespace mvbb {
 
     template<class TPointCloudType>
     FitAndSplitHierarchy<FitAndSplitNode<TPointCloudType>> decompose3D(TPointCloudType& points3D, Algo_Base <TPointCloudType>* const bbox_algorithm, uint32_t kappa){
-//        std::unique_ptr<Algo_Base<TPointCloudType>> bbox_algorithm;
-//        switch(algorithm){
-//            case BoundingBoxAlgorithm::MVBB:
-//                bbox_algorithm = new Algo_MVBB<TPointCloudType>();
-//                break;
-//
-////            case BoundingBoxAlgorithm::PCA:
-////                bbox_algorithm = new Algo_PCA<TPointCloudType>();
-////                break;
-//        }
 
         auto initial_bbox = bbox_algorithm->fit_bounding_box(points3D);
         FitAndSplitHierarchy<FitAndSplitNode<TPointCloudType>> tree;
-        tree.flat_hierarchy.emplace_back(initial_bbox);
+        tree.flat_hierarchy.emplace_back(initial_bbox, points3D.begin(), points3D.end());
 
-        for(auto depth=0; depth<kappa; ++depth){
+        for(auto depth=0; depth<=kappa; ++depth){
             auto all_parents =  tree.getNodes(depth);
+            int parrent_counter = 0;
             std::for_each(all_parents.begin(), all_parents.end(),
-            [&points3D, &tree, bbox_algorithm](auto& fas_node){
+            [&tree, bbox_algorithm, depth, &parrent_counter](auto& fas_node){
                 auto bbox = fas_node.bounding_box;
                 std::array<BestSplit, 6> all_splits;
                 // A=0; B=1; C=2 => see typdef::BoxFaces;
                 // calculate each split for evey direction on evey face 3 faces x 2
                 for(auto face=0; face < 3; ++face){
-                    auto projection_plane = bbox.get_plane(static_cast<boxy::BoxFaces>(face));
-                    auto coordinate_system2D = bbox.get_plane_coordinates2D(static_cast<boxy::BoxFaces>(face));
-                    Rasterizer<256> grid(minmax2D(bbox, coordinate_system2D));
+                    auto current_face = static_cast<boxy::BoxFaces>(face);
+                    auto projection_plane = bbox.get_plane(current_face);
+                    auto coordinate_system2D = bbox.get_plane_coordinates2D(current_face);
+                    Rasterizer<128> grid(minmax2D(bbox, coordinate_system2D));
 
                     std::vector<Point2D> projected_2D;
-                    projected_2D.reserve(points3D.size());
+                    projected_2D.reserve(fas_node.points.size());
 
                     // project, change coordinate system and rasterize !
-                    std::for_each(points3D.cbegin(), points3D.cend(), [projection_plane, coordinate_system2D, &grid](const auto& point){
+                    std::for_each(fas_node.points.cbegin(), fas_node.points.cend(), [projection_plane, coordinate_system2D, &grid](const auto& point){
                         auto proj = projection_plane.projection(std::get<0>(point)); //project to plane (3D)
                         auto point2d =  coordinate_system2D.project_onto_plane(proj); //project to plane (2D) & new coordinate system
                         //care not threading safe
                         grid.insert(point2d);
                     });
 
+                    #if true
+                    std::vector<Point> after_transform; // debug
+                    auto dim = grid.raster();
+                    for(auto i=0; i < dim; ++i){
+                        for(auto j=0; j < dim; ++j){
+                            if(grid.get(i,j) > 0) {
+                                Point2D p2d_grid;
+                                p2d_grid << i, j;
+                                auto p2d = grid.from_grid(p2d_grid);
+                                auto gp = coordinate_system2D.project_to_global(p2d);
+                                after_transform.push_back(gp);
+                            }
+                        }
+                    }
+                    std::filesystem::path grid_path("./grid_" + std::to_string(depth) + "_" + std::to_string(face) + ".csv");
+                    grid.save_grid(grid_path);
+
+                    std::filesystem::path grid_global_path("./grid_global_" + std::to_string(depth) + "_" + std::to_string(face) + ".csv");
+                    if (!CGAL::IO::write_OFF(grid_global_path, after_transform, CGAL::parameters::stream_precision(6))) {
+                        std::cout << "oh no\n";
+//                        ASSERT_TRUE(false) << "grid_glaobal not written, not sure why, maybe check path: "
+//                                           << std::filesystem::current_path();
+                    }
                     // go primary & secondary direction
-                    all_splits[face*2+0] = grid.best_split<direction_ex>();
-                    all_splits[face*2+1] = grid.best_split<direction_ey>();
+                    #endif
+                    // TODO this is quickfix and needs to be changed
+                    auto cell_depth = bbox.get_depth(current_face);
+                    all_splits[face*2+0] = grid.best_split<direction_ex>(cell_depth);
+                    all_splits[face*2+0].area /= grid.area();
+                    all_splits[face*2+1] = grid.best_split<direction_ey>(cell_depth);
+                    all_splits[face*2+1].area /= grid.area();
+                    #if true
+                    for(auto i = 0; i < 2; ++i) {
+                        auto cut = coordinate_system2D.project_to_global(all_splits[face * 2 + i].end_cut);
+                        auto fulcrum = coordinate_system2D.project_to_global(all_splits[face * 2 + i].begin_cut);
+                        auto origin = coordinate_system2D.project_to_global(grid.from_grid(Point2D(0,0)));
+                        auto[plane_mesh, plane_system] = Plane2Mesh(fulcrum, origin, cut, i > 0);
+
+
+                        std::filesystem::path cplan_off("./cutting_plane_" + std::to_string(depth) + "_" + std::to_string(face) + "_" + std::to_string(i) + ".off");
+                        if (!CGAL::IO::write_OFF(cplan_off, plane_mesh, CGAL::parameters::stream_precision(6))) {
+                            std::cout << "oh no2\n";
+                        }
+
+                        std::filesystem::path plane_system_path("./cutting_plane_system" + std::to_string(depth) + "_" + std::to_string(face) + "_" + std::to_string(i) + ".off");
+                        if (!CGAL::IO::write_OFF(plane_system_path, plane_system, CGAL::parameters::stream_precision(6))) {
+                            std::cout << "oh no3\n";
+                        }
+
+
+//                        GTEST_COUT << "CUT: " << depth << "Plane: " << std::to_string(face) << "direction:" << i << " Volumne" << std::to_string(all_splits[face*2+i].area)
+//                               << std::endl;
+//                }
+                    }
+                    #endif
+
                 }
+
                 // select_best_split
                 auto best_split = std::min_element( all_splits.begin(), all_splits.end(),
                                              []( const auto& a, const auto& b ){
                                                  return a.area < b.area;
                                              } );
 
-                auto selected_face = static_cast<boxy::BoxFaces>(best_split - all_splits.begin());
+                auto lll = 0;
+                for(auto& split : all_splits) {
+                    GTEST_COUT << "Plane: " << std::to_string(lll++) << " Volumne" << std::to_string(split.area)
+                               << std::endl;
+                }
+                GTEST_COUT << "Volumne of choosen plane: " << std::to_string(best_split->area) << std::endl;
+
+                auto selected_face = static_cast<BoxFaces>(std::distance(all_splits.begin(), best_split)/2);
+
                 Plane_3 projection_plane = bbox.get_plane(selected_face);
+                GTEST_COUT << "Face " << std::to_string(selected_face) << std::endl;
+
                 // this could be omited as its only created for one call;
                 auto coordinate_system2D = bbox.get_plane_coordinates2D(selected_face);
-                auto fulcrum = coordinate_system2D.project_to_global(best_split->coordinate);
 
-                auto ovec = projection_plane.orthogonal_vector();
-                Plane_3 cutting_plane(fulcrum, ovec);
+                auto p2 = coordinate_system2D.project_to_global(best_split->end_cut);
+                auto o1  = coordinate_system2D.project_to_global(best_split->begin_cut);
+                auto p1 = coordinate_system2D.project_to_global(best_split->origin);
+                auto orthogal_vector = CGAL::cross_product(p1- o1,  p2- o1);
+                Plane_3 cutting_plane(o1, p2, o1 + orthogal_vector);
+
+//                std::vector<Point> oo = { cutting_plane.point(), cutting_plane.point() + cutting_plane.base1(), cutting_plane.point()+ cutting_plane.base2()};
+                auto[plane_mesh, plane_system] = Plane2Mesh(o1, p1, p2, std::distance(all_splits.begin(), best_split) % 2);
+//                std::vector<Point> oo = { o1, p2, o1 + orthogal_vector};
+                std::filesystem::path cpf("./final_plane" + std::to_string(depth) + "_" + std::to_string(parrent_counter++) + "_" + std::to_string(selected_face) + ".off");
+                if (!CGAL::IO::write_OFF(cpf, plane_mesh, CGAL::parameters::stream_precision(6))) {
+                    std::cout << "oh no100\n";
+                    throw std::runtime_error("not found");
+                }
 
                 // split and fit new boxes
                 // TODO Move this inside FitAndSplitHierachy !
-                auto second_bbox_begins_at = std::partition(points3D.begin(), points3D.end(),
-                                     [cutting_plane](auto& point){return cutting_plane.has_on_negative_side(std::get<0>(point));});
+                auto second_bbox_begins_at = std::partition(fas_node.points.begin(), fas_node.points.end(),
+                                     [&cutting_plane](auto& point){return cutting_plane.has_on_negative_side(std::get<0>(point));});
 
                 // TODO use ranges !!!
-                TPointCloudType vector_bbox1(points3D.begin(), second_bbox_begins_at);
+                TPointCloudType vector_bbox1(fas_node.points.begin(), second_bbox_begins_at);
                 BBox bbox1 = bbox_algorithm->fit_bounding_box(vector_bbox1);
-                TPointCloudType vector_bbox2(second_bbox_begins_at, points3D.end());
+                TPointCloudType vector_bbox2(second_bbox_begins_at,fas_node.points.end());
                 BBox bBox2 = bbox_algorithm->fit_bounding_box(vector_bbox2);
 
                 // update tree
-                tree.flat_hierarchy.emplace_back(bbox1);
-                tree.flat_hierarchy.emplace_back(bBox2);
+                tree.flat_hierarchy.emplace_back(bbox1, fas_node.points.begin(), second_bbox_begins_at);
+                tree.flat_hierarchy.emplace_back(bBox2, second_bbox_begins_at, fas_node.points.end());
             });
         }
         return tree;

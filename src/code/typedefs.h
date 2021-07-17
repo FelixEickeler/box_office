@@ -133,6 +133,23 @@ namespace boxy{
                     return min_max;
                 }
 
+                float get_depth(BoxFaces face) {
+                    switch (face) {
+                        case BoxFaces::A:
+                        case BoxFaces::D:
+//                            return {vertices[1], vertices[0], vertices[3]};
+                            return CGAL::sqrt<float>((vertices[5]- vertices[0]).squared_length());
+                        case BoxFaces::B:
+                        case BoxFaces::E:
+                            return CGAL::sqrt<float>((vertices[3]- vertices[0]).squared_length());
+                        case BoxFaces::C:
+                        case BoxFaces::F:
+                            return CGAL::sqrt<float>((vertices[1]- vertices[0]).squared_length());
+                        default:
+                            throw std::runtime_error("This face does not exist");
+                    }
+                }
+
                 [[nodiscard]] float volume() const{
                     return abs(cross_product((vertices[1] - vertices[0]),(vertices[3] - vertices[0])) * (vertices[5] - vertices[0]));
                 }
@@ -156,9 +173,14 @@ namespace boxy{
         TIterator begin() {return _begin; }
         TIterator end() {return _end;}
 //        using const_iterator = typename std::iterator_traits<TIterator>::const_iterator;
-        TIterator begin() const { return _begin(); }
-        TIterator end()   const { return _end(); }
+        TIterator begin() const { return _begin; }
+        TIterator end()   const { return _end; }
+        TIterator cbegin() const { return _begin; }
+        TIterator cend()   const { return _end; }
         typename std::iterator_traits<TIterator>::reference operator[](std::size_t index) { return _begin[index]; }
+        size_t size() const{
+            return std::distance(_begin, _end);
+        }
     };
 
     struct BestGridSplit{
@@ -168,7 +190,9 @@ namespace boxy{
 
     struct BestSplit{
         double area;
-        Vector2f coordinate;
+        Eigen::Vector2f begin_cut;
+        Eigen::Vector2f end_cut;
+        Eigen::Vector2f origin;
     };
 }
 
