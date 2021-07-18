@@ -4,7 +4,9 @@ project(BoxOffice)
 set(BINARY ${CMAKE_PROJECT_NAME})
 
 message(..)
+#set(CMAKE_CXX_FLAGS_DEBUG "-g -O2")
 
+add_compile_definitions (CGAL_DISABLE_ROUNDING_MATH_CHECK=ON)
 # Setup foreign projects
 # pybind11 + Python Target
 add_subdirectory(../modules/pybind11 ../pybin_bin EXCLUDE_FROM_ALL)
@@ -43,19 +45,4 @@ endif()
 
 #create_single_source_cgal_program("bench_obb.cpp")
 #target_link_libraries(mvbb PUBLIC)
-
-# Testing in C++
-
-
-#find_package(Eigen3 3.1.0 REQUIRED) #(3.1.0 or greater)
-#if (EIGEN3_FOUND)
-##   include( ${EIGEN3_USE_FILE})
-#   include(CGAL_Eigen_support)
-#
-#   message("Eigen was found ++")
-#endif()
-#create_single_source_cgal_program("obbsr.cpp")
-#add_executable(tests obbsr.cpp)
-#target_link_libraries(tests PUBLIC CGAL::Eigen_support)
-#target_link_libraries(tests CGAL::CGAL)
 

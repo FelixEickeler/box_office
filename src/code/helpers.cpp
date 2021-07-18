@@ -2,7 +2,6 @@
 // Created by felix on 12.06.2021.
 //
 #include "helpers.h"
-#include "helpers_nobind.h"
 
 np_array helpers::xyzc_2_numpy(VectorView<pointcloud_xyzc::iterator>objr) {
     pointcloud_xyzc partial_cloud;
@@ -66,7 +65,7 @@ np_array helpers::bbox_2_numpy(BBox bbox) {
     auto nbm = numpy_bbox.mutable_data();
 
     auto cnt = 0;
-    for(auto& point : bbox.vertices){
+    for(auto& point : bbox.get_vertices()){
         nbm[cnt + 0] = float(point.x());
         nbm[cnt + 1] = float(point.y());
         nbm[cnt + 2] = float(point.z());

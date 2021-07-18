@@ -118,8 +118,7 @@ boxy::BBox MvbbEvaluator::bounding_box() const { //pointcloud_xyzc input
     auto finish = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = finish - start;
     std::cout << "Elapsed time: " << elapsed.count() << " s\n";
-    boxy::BBox bbox;
-    bbox.vertices = obb_points;
+    boxy::BBox bbox(obb_points);
 //    BBox obb_points;
     return bbox;
 }

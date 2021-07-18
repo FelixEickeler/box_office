@@ -102,9 +102,20 @@ namespace boxy{
                     throw std::runtime_error("Case {name} not found.");
             }
         }
+            std::array<Point , 8> vertices{};
 
         public:
-                std::array<Point , 8> vertices;
+            BBox(Point p1,Point p2,Point p3,Point p4,Point p5,Point p6,Point p7,Point p8) :
+                    vertices({p1, p2, p3, p4, p5 , p6, p7, p8}) {}
+
+            BBox(std::array<Point, 8> arr) : vertices(arr) {}
+
+             BBox() = default;
+
+            [[nodiscard]] std::array<Point, 8> get_vertices() const{
+                return vertices;
+            }
+
                 [[nodiscard]] Plane_3 get_plane(BoxFaces face) const{
                     return std::make_from_tuple<Plane_3>(GetPoints(face).YOX);
                 }
@@ -168,8 +179,8 @@ namespace boxy{
         TIterator _end;
 
         public:
-            VectorView(TIterator _begin, TIterator _end)  : _begin(_begin), _end(_end){}
-            VectorView()= default;
+            VectorView(TIterator begin, TIterator end)  : _begin(begin), _end(end){}
+//            VectorView()= default;
         TIterator begin() {return _begin; }
         TIterator end() {return _end;}
 //        using const_iterator = typename std::iterator_traits<TIterator>::const_iterator;
@@ -177,10 +188,39 @@ namespace boxy{
         TIterator end()   const { return _end; }
         TIterator cbegin() const { return _begin; }
         TIterator cend()   const { return _end; }
+
         typename std::iterator_traits<TIterator>::reference operator[](std::size_t index) { return _begin[index]; }
-        size_t size() const{
+        [[nodiscard]] size_t size() const{
             return std::distance(_begin, _end);
         }
+    };
+
+    class NewVectorView{
+        size_t _begin;
+        size_t _end;
+
+        public:
+            NewVectorView(pointcloud_xyzc::const_iterator base, pointcloud_xyzc::const_iterator begin, pointcloud_xyzc::const_iterator end) : _begin(std::distance(base, begin)), _end(std::distance(base, end)){}
+            pointcloud_xyzc::iterator begin(pointcloud_xyzc::iterator base) {
+                return std::next(base, _begin);
+            }
+
+            pointcloud_xyzc::iterator end(pointcloud_xyzc::iterator base) {
+                return std::next(base, _end);
+            }
+
+            [[nodiscard]] pointcloud_xyzc::const_iterator cbegin(pointcloud_xyzc::const_iterator base) const{
+                return std::next(base, _begin);
+            }
+
+            [[nodiscard]] pointcloud_xyzc::const_iterator cend(pointcloud_xyzc::const_iterator base) const{
+                return std::next(base, _end);
+            }
+
+            size_t size() const{
+                return _end - _begin;
+            }
+
     };
 
     struct BestGridSplit{
