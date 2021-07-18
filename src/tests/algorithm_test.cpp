@@ -217,21 +217,12 @@ TEST (algorithm_testing /*test suite name*/, Algo_MVBB/*test name*/) {
     BBox proof_bbox;
     auto idx = 0;
     for(const auto& v : vertices(proof)) {
-        proof_bbox.vertices[idx] = proof.point(v);
+        proof_bbox.get_vertices()[idx] = proof.point(v);
         ++idx;
     }
     auto bbox = algo.fit_bounding_box(points);
     ASSERT_NEAR(bbox.volume(), proof_bbox.volume(), 0.01);
-
-    // this make very differnt bounding boxes
-//    for(auto i=0; i < bbox.vertices.size(); ++i){
-//        ASSERT_NEAR(proofv[i].x(), bbox.vertices[i].x(), 0.01)  << "i: " << i;
-//        ASSERT_NEAR(proofv[i].y(), bbox.vertices[i].y(), 0.01)  << "i: " << i;
-//        ASSERT_NEAR(proofv[i].z(), bbox.vertices[i].z(), 0.01)  << "i: " << i;
-//    }
-//    ASSERT_TRUE(false) << "May be true, but not evaluated";
-
-}
+    }
 
 TEST (algorithm_testing /*test suite name*/, Algo_PCA/*test name*/) {
     ASSERT_TRUE(false) << "Not implmented yet";
@@ -252,16 +243,11 @@ TEST (algorithm_testing /*test suite name*/, decompose3D/*test name*/) {
     uint32_t levels = 1;
     auto tree = mvbb::decompose3D(points, &mvbb, levels);
     for(int k =0; k <= levels+1; ++k){
-        EXPECT_TRUE(false) << "Treelevel" << k;
         uint32_t sk = 0;
         for(auto& node : tree.getNodes(k)) {
-
-            EXPECT_TRUE(false) << "nodelevel: " << sk << "points inside: " << node.points.size() ;
-            std::filesystem::path cell_path_name(
-                    "./bunny_tree_lvl" + std::to_string(k) + "_" + std::to_string(sk) + ".off");
-
+            std::filesystem::path cell_path_name( "./bunny_tree_lvl" + std::to_string(k) + "_" + std::to_string(sk) + ".off");
             CGAL::Surface_mesh<Point> obb_sm;
-            auto obb_points = node.bounding_box.vertices;
+            auto obb_points = node.bounding_box.get_vertices();
             auto box = CGAL::make_hexahedron(obb_points[0], obb_points[1], obb_points[2], obb_points[3],
                                              obb_points[4], obb_points[5], obb_points[6], obb_points[7], obb_sm);
 

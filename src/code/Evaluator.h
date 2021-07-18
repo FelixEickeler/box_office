@@ -40,7 +40,7 @@ class MvbbEvaluator{
         boxy::BBox bounding_box() const;
         boxy::np_array get_pointcloud();
         boxy::objectlist get_objectlist();
-        boxy::VectorView<boxy::pointcloud_xyzc::const_iterator> get_object(uint32_t object_id) const;
+        boxy::pointcloud_xyzc get_object(uint32_t object_id) const;
 };
 
 

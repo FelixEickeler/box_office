@@ -65,9 +65,9 @@ TEST (typdef_testing /*test suite name*/, CooridnateSystem2D_Project2Global/*tes
 
 
 TEST (typdef_testing /*test suite name*/, BBOX_get_plane_allFaces/*test name*/) {
-    boxy::BBox bbox;
+
     auto cube_points = Get_CubePoints();
-    bbox.vertices = cube_points;
+    boxy::BBox bbox(cube_points);
 
     auto A = boxy::Plane_3(cube_points[0], cube_points[1], cube_points[5]);
     auto B = boxy::Plane_3(cube_points[3], cube_points[2], cube_points[1]);
@@ -85,9 +85,8 @@ TEST (typdef_testing /*test suite name*/, BBOX_get_plane_allFaces/*test name*/) 
 }
 
 TEST (typdef_testing /*test suite name*/, BBOX_minMax/*test name*/) {
-    boxy::BBox bbox;
     auto cube_points = Get_CubePoints();
-    bbox.vertices = cube_points;
+    boxy::BBox bbox(cube_points);
 
     auto min_max = bbox.min_max();
     ASSERT_EQ(min_max[0], 0);

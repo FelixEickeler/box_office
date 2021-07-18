@@ -58,25 +58,5 @@ namespace  helpers {
     bool xyzc_compare(const XYZC& p1, const XYZC& p2);
 
     bool xyzc_objecttype_compare(const XYZC& xyzc, const XYZC& lookup);
-
-
-    // fit bounding box
-    // tree initialisation (which tree ? )
-    // project to surface
-    // rasterize (fixed raster ? )
-    // search forn_n best split
-    // join update tree
-    // repeat
-
 }
-
-
-
-
-
-
-#endif //TEST_BIND_HELPER_H
-//    auto start = std::chrono::high_resolution_clock::now();
-//    auto finish = std::chrono::high_resolution_clock::now();
-//    std::chrono::duration<double> elapsed = finish - start;
-//    std::cout << "Elapsed time: " << elapsed.count() << " s\n";
+#endif

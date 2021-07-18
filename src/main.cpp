@@ -16,11 +16,11 @@ PYBIND11_MODULE(mvbb, module_handle){
             .def("load_points", &MvbbEvaluator::load_points)
             .def("load_objects", &MvbbEvaluator::load_objects)
             .def("get_pointcloud", &MvbbEvaluator::get_pointcloud)
-            .def("get_objects", &MvbbEvaluator::get_objectlist)
+            .def("list_objects", &MvbbEvaluator::get_objectlist)
             .def("get_object", [](const MvbbEvaluator& self, int object_id) {
                 return helpers::xyzc_2_numpy(self.get_object(object_id));
             })
-            .def("calculate_mvbb", [](const MvbbEvaluator& self) {
+            .def("calculate_mvbb", [](const MvbbEvaluator& self, int object_id) {
                 return helpers::bbox_2_numpy(self.bounding_box());
             });
 //            .def_property_readonly("image", [](MvbbEvaluator &self) {
