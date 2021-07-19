@@ -9,23 +9,26 @@
 #include <filesystem>
 #include <string>
 #include "typedefs.h"
+#include "BoxEntity.h"
 
 
 //#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 //#include <CGAL/Surface_mesh.h>
 #include <CGAL/bounding_box.h>
+#include "BoxEntity.h"
 
 //#include <CGAL/Polygon_mesh_processing/triangulate_faces.h>
 //#include <CGAL/Polygon_mesh_processing/measure.h>
 //#include <CGAL/Polygon_mesh_processing/IO/polygon_mesh_io.h>
 
 //using Path = std::filesystem::path;
+using objectlist =  std::unordered_map<int, BoxEntity>;
 
 class MvbbEvaluator{
     boxy::Path _pointcloud_src = "";
     boxy::Path _objectlist_src = "";
     boxy::pointcloud_xyzc _pointcloud;
-    boxy::objectlist _objectlist;
+    objectlist _objectlist;
     std::string hash_key;
 
     public:
@@ -39,11 +42,11 @@ class MvbbEvaluator{
 
         boxy::BBox bounding_box() const;
         boxy::np_array get_pointcloud();
-        boxy::objectlist get_objectlist();
+        objectlist get_objectlist();
         boxy::pointcloud_xyzc get_object(uint32_t object_id) const;
 };
 
-
+MvbbEvaluator create_mvbbevaluator(const std::string& point_src, const std::string& class_src);
 
 
 #endif //MVBB_EVALUATOR_H

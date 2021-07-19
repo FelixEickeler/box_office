@@ -9,6 +9,7 @@ np_array helpers::xyzc_2_numpy(VectorView<pointcloud_xyzc::iterator>objr) {
     return xyzc_2_numpy(partial_cloud);
 }
 
+
 np_array helpers::xyzc_2_numpy(const pointcloud_xyzc &pointcloud) {
 
     //create numpy memory space
@@ -72,5 +73,32 @@ np_array helpers::bbox_2_numpy(BBox bbox) {
         cnt+=3;
     }
     return numpy_bbox;
+}
+
+std::vector<Point> helpers::numpy_2_points(py::array_t<float> numpy83) {
+    py::buffer_info buf1 = numpy83.request();
+    auto *ptr1 = (float *) buf1.ptr;
+    size_t rows = buf1.shape[0];
+    size_t cols = buf1.shape[1];
+    if(cols != 3){
+        throw std::runtime_error("This numpy array must be Nx3; 8 for each vertex and 3 for x,y,z !");
+    }
+
+    std::vector<Point> tmp;
+    for (size_t idx = 0; idx < rows; idx++)
+        tmp.emplace_back(ptr1[idx*cols + 0], ptr1[idx*cols + 1], ptr1[idx*cols + 2]);
+    return tmp;
+}
+
+Point helpers::numpy31_2_point(py::array_t<float> numpy31) {
+    py::buffer_info buf1 = numpy31.request();
+    auto *ptr1 = (float *) buf1.ptr;
+    size_t rows = buf1.shape[0];
+    size_t cols = buf1.shape[1];
+    if(rows != 3 || cols != 1){
+        throw std::runtime_error("This numpy array must be 3x1; 3 for x,y,z !");
+    }
+
+    return Point(ptr1[0], ptr1[1], ptr1[2]);
 }
 

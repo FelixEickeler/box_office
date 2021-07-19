@@ -14,7 +14,7 @@ target_sources(BoxOffice PRIVATE ${sources})
         #Evaluator.cpp Evaluator.h helpers.h helpers.cpp typedefs.h trim.h algorithm.cpp algorithm.h)
 
 # 2.) test / lib target
-add_library(${BINARY}_lib STATIC ${sources})
+add_library(${BINARY}_lib STATIC ${sources} BoxEntity.cpp BoxEntity.h)
 target_link_libraries(${BINARY}_lib PRIVATE tbb CGAL::CGAL CGAL::Eigen3_support pybind11::module pybind11::lto pybind11::windows_extras)
 target_sources(${BINARY}_lib PRIVATE ${sources})
 

@@ -20,11 +20,30 @@ namespace  helpers {
     // TODO fix to iterators to avoid copy before, also make these in a pybind file !
     np_array xyzc_2_numpy(const pointcloud_xyzc &pointcloud);
 
-    np_array xyzc_2_numpy(VectorView<pointcloud_xyzc::iterator> objr);
+    np_array xyzc_2_numpy(VectorView<pointcloud_xyzc::iterator>objr);
 
     np_array bbox_2_numpy(BBox bbox);
 
+    Point numpy31_2_point(py::array_t<float> numpy31);
 
+    std::vector<Point> numpy_2_points(py::array_t<float> numpy31);
+
+    template <typename T>
+    struct range_t{
+        T a, b;
+        range_t(T x, T y) : a(x), b(y) {}
+        T begin(){
+            return a;
+        }
+        T end(){
+            return b;
+        }
+    };
+
+    template <typename T>
+    range_t<T> range(T a, T b)    {
+        return range_t<T>(a, b);
+    }
 
 //    auto split(std::string const &str, const char delim);
 

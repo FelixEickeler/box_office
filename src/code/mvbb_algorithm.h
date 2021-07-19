@@ -39,6 +39,10 @@ namespace mvbb {
 //        explicit FitAndSplitNode(BBox _bounding_box) : bounding_box(_bounding_box){}
         explicit FitAndSplitNode(BBox _bounding_box, typename Tpointcloud::iterator begin,
                                  typename Tpointcloud::iterator end) : bounding_box(_bounding_box), points(begin, end) {}
+
+        Tpointcloud get_points() const{
+            return Tpointcloud(points.begin(), points.end());
+        }
     };
 
     template<class TPointCloud>
@@ -68,9 +72,10 @@ namespace mvbb {
                 return nodes.back();
             }
 
-            std::vector<FitAndSplitNode<TPointCloud>> get_finalized(){
+            std::vector<FitAndSplitNode<TPointCloud>> get_finalized(int node_level = -1){
+                if(node_level < 0) node_level = depth();
                 std::vector<FitAndSplitNode<TPointCloud>> collection;
-                for(int k =0; k < depth(); ++k) {
+                for(int k =0; k < node_level; ++k) {
                     uint32_t sk = 0;
                     for (auto &node : getNodes(k)) {
                         if (node.final) {

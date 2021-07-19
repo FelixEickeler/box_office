@@ -80,9 +80,13 @@ bool MvbbEvaluator::load_objects() {
         else {
             hash_key = objects[0][1];
         }
-        std::for_each(objects.cbegin() + 1, objects.cend(), [this](auto const &obj) {
-        _objectlist.insert_or_assign(std::stoi(obj[0]), obj[1]);
-        });
+        for(auto const &obj : helpers::range(objects.begin()+1, objects.end())){
+            int id = std::stoi(obj[0]);
+            auto obj_name = obj[1];
+            boxy::pointcloud_xyzc tmp = this->get_object(id);
+            auto box_entity = BoxEntity(static_cast<int>(id), obj_name, tmp);
+            _objectlist.insert_or_assign(id, box_entity);
+        };
         return true;
     }
     return false;
@@ -91,18 +95,20 @@ bool MvbbEvaluator::load_objects() {
 boxy::np_array MvbbEvaluator::get_pointcloud() {
     return helpers::xyzc_2_numpy(_pointcloud);
 }
-
-boxy::objectlist MvbbEvaluator::get_objectlist() {
+/// This should maybe throw if no data is loaded yet.
+/// TODO change logic somehow.
+/// \return
+objectlist MvbbEvaluator::get_objectlist() {
     return _objectlist;
 }
 
 pointcloud_xyzc MvbbEvaluator::get_object(uint32_t object_id) const {
-//    auto tmp_comp =  XYZC {Point(), object_id};
-    pointcloud_xyzc tmp;
-    std::copy_if (_pointcloud.begin(), _pointcloud.end(), std::back_inserter(tmp), [object_id](auto& point){return std::get<1>(point) == object_id;});
-    return tmp;
-//    return pointcloud_xyzc(std::lower_bound(_pointcloud.begin(), _pointcloud.end(), tmp_comp, helpers::xyzc_objecttype_compare),
-//                      std::upper_bound(_pointcloud.begin(), _pointcloud.end(), tmp_comp, helpers::xyzc_objecttype_compare));
+    auto tmp_comp =  XYZC {Point(), object_id};
+//    pointcloud_xyzc tmp;
+//    std::copy_if (_pointcloud.begin(), _pointcloud.end(), std::back_inserter(tmp), [object_id](auto& point){return std::get<1>(point) == object_id;});
+//    return tmp;
+    return pointcloud_xyzc(std::lower_bound(_pointcloud.begin(), _pointcloud.end(), tmp_comp, helpers::xyzc_objecttype_compare),
+                      std::upper_bound(_pointcloud.begin(), _pointcloud.end(), tmp_comp, helpers::xyzc_objecttype_compare));
 }
 
 boxy::BBox MvbbEvaluator::bounding_box() const { //pointcloud_xyzc input
@@ -126,3 +132,11 @@ boxy::BBox MvbbEvaluator::bounding_box() const { //pointcloud_xyzc input
     return bbox;
 }
 
+MvbbEvaluator create_mvbbevaluator(const std::string &point_src, const std::string &class_src) {
+    auto self = MvbbEvaluator();
+    self.set_pointcloud_path(point_src);
+    self.set_objectlist_path(class_src);
+    self.load_objects();
+    self.load_points();
+    return self;
+}

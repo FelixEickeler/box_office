@@ -168,7 +168,7 @@ namespace boxy{
     // TODO Extract this to a Pybind Typedef i guess ?
     namespace py = pybind11;
     using np_array = py::array_t<float, py::array::c_style> ;
-    using objectlist = std::unordered_map<int, std::string>;
+//    using objectlist = std::unordered_map<int, std::string>;
     using Path = std::filesystem::path;
 
     template<typename TIterator>
