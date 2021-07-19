@@ -31,7 +31,7 @@ namespace mvbb {
     //sexy
     template<typename Tpointcloud>
     struct FitAndSplitNode {
-        const BBox bounding_box;
+        BBox bounding_box;
         VectorView<typename Tpointcloud::iterator> points = nullptr;
         bool final = false;
 
