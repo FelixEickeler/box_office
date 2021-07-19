@@ -4,9 +4,10 @@
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
 #include "code/helpers.h"
+#include "code/mvbb_algorithm.h"
 namespace py = pybind11;
 
-PYBIND11_MODULE(mvbb, module_handle){
+PYBIND11_MODULE(BoxOffice, module_handle){
     module_handle.doc() = "This module computes the MVBB Decomposition";
 
     py::class_<MvbbEvaluator>(module_handle, "MvbbEvaluator")
@@ -20,14 +21,28 @@ PYBIND11_MODULE(mvbb, module_handle){
             .def("get_object", [](const MvbbEvaluator& self, int object_id) {
                 return helpers::xyzc_2_numpy(self.get_object(object_id));
             })
-            .def("calculate_mvbb", [](const MvbbEvaluator& self, int object_id) {
+            .def("calculate_mvbb", [](const MvbbEvaluator& self, int object_id, int depth, float gain_threshold=0.99f) {
+                auto obj_points = self.get_object(object_id);
+                mvbb::Algo_MVBB<pointcloud_xyzc> algo;
+                auto box_decomposition = mvbb::decompose3D(obj_points, &algo, depth, gain_threshold);
+//                for(auto& node  : box_decomposition.get_finalized(){
+//                    node.
+//                }
                 return helpers::bbox_2_numpy(self.bounding_box());
-            });
+                });
+
+//    py::class_<boxy::BBox>(module_handle, "BoundingBox")
+//            .def(py::init<>())
+//            .def_property("vertices", &MvbbEvaluator::get_pointcloud_path, )
+//            .def("vertices" ,[](const mvbb::FitAndSplitNode<pointcloud_xyzc> self){
+//                    std::array<Point, 8> tmp =  self.bounding_box.get_vertices();
+//                    return helpers::xyzc_2_numpy(tmp);
+//                })
 //            .def_property_readonly("image", [](MvbbEvaluator &self) {
 //                py::array out = py::cast(self.make_image());
 //                return out;
 //            })
-                    // .def("multiply_two", &SomeClass::multiply_two)
+//                     .def("multiply_two", &SomeClass::multiply_two)
 
 //            .def("function_that_takes_a_while", &SomeClass::function_that_takes_a_while)
 //            ;

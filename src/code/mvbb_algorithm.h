@@ -68,6 +68,20 @@ namespace mvbb {
                 return nodes.back();
             }
 
+            std::vector<FitAndSplitNode<TPointCloud>> get_finalized(){
+                std::vector<FitAndSplitNode<TPointCloud>> collection;
+                for(int k =0; k < depth(); ++k) {
+                    uint32_t sk = 0;
+                    for (auto &node : getNodes(k)) {
+                        if (node.final) {
+                            collection.push_back(node);
+                        }
+                    }
+                }
+                return collection;
+
+            }
+
 //        boxy::VectorView<typename std::vector<TNodeType>::const_iterator> getNodes(uint32_t kappa){
 //            uint32_t start_index;
 //            uint32_t end_index;

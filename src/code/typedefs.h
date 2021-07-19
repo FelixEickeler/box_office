@@ -110,60 +110,59 @@ namespace boxy{
 
             BBox(std::array<Point, 8> arr) : vertices(arr) {}
 
-             BBox() = default;
+            BBox() = default;
 
             [[nodiscard]] std::array<Point, 8> get_vertices() const{
                 return vertices;
             }
 
-                [[nodiscard]] Plane_3 get_plane(BoxFaces face) const{
-                    return std::make_from_tuple<Plane_3>(GetPoints(face).YOX);
-                }
+            [[nodiscard]] Plane_3 get_plane(BoxFaces face) const{
+                return std::make_from_tuple<Plane_3>(GetPoints(face).YOX);
+            }
 
-                [[nodiscard]] CoordinateSystem2D get_plane_coordinates2D(BoxFaces face) const{
-                    auto triplet = GetPoints(face);
-                    auto e_x = cgal_to_eigen(triplet.X() - triplet.O());
-                    auto e_y = cgal_to_eigen(triplet.Y() - triplet.O());
-                    auto e_0 = cgal_to_eigen(triplet.O());
-                    e_x.normalize();
-                    e_y.normalize();
-                    return {e_0, e_x, e_y};
-                }
+            [[nodiscard]] CoordinateSystem2D get_plane_coordinates2D(BoxFaces face) const{
+                auto triplet = GetPoints(face);
+                auto e_x = cgal_to_eigen(triplet.X() - triplet.O());
+                auto e_y = cgal_to_eigen(triplet.Y() - triplet.O());
+                auto e_0 = cgal_to_eigen(triplet.O());
+                e_x.normalize();
+                e_y.normalize();
+                return {e_0, e_x, e_y};
+            }
 
-                std::array<float, 6> min_max(){
-                    std::array<float, 6> min_max{};
-                    for(auto& v : vertices){
-                        if(v.x() < min_max[0]) min_max[0] = v.x();
-                        if(v.y() < min_max[1]) min_max[1] = v.y();
-                        if(v.z() < min_max[2]) min_max[2] = v.z();
-                        
-                        if(v.x() > min_max[3]) min_max[3] = v.x();
-                        if(v.y() > min_max[4]) min_max[4] = v.y();
-                        if(v.z() > min_max[5]) min_max[5] = v.z();
-                    }
-                    return min_max;
-                }
+            std::array<float, 6> min_max(){
+                std::array<float, 6> min_max{};
+                for(auto& v : vertices){
+                    if(v.x() < min_max[0]) min_max[0] = v.x();
+                    if(v.y() < min_max[1]) min_max[1] = v.y();
+                    if(v.z() < min_max[2]) min_max[2] = v.z();
 
-                float get_depth(BoxFaces face) {
-                    switch (face) {
-                        case BoxFaces::A:
-                        case BoxFaces::D:
-//                            return {vertices[1], vertices[0], vertices[3]};
-                            return CGAL::sqrt<float>((vertices[5]- vertices[0]).squared_length());
-                        case BoxFaces::B:
-                        case BoxFaces::E:
-                            return CGAL::sqrt<float>((vertices[3]- vertices[0]).squared_length());
-                        case BoxFaces::C:
-                        case BoxFaces::F:
-                            return CGAL::sqrt<float>((vertices[1]- vertices[0]).squared_length());
-                        default:
-                            throw std::runtime_error("This face does not exist");
-                    }
+                    if(v.x() > min_max[3]) min_max[3] = v.x();
+                    if(v.y() > min_max[4]) min_max[4] = v.y();
+                    if(v.z() > min_max[5]) min_max[5] = v.z();
                 }
+                return min_max;
+            }
 
-                [[nodiscard]] float volume() const{
-                    return abs(cross_product((vertices[1] - vertices[0]),(vertices[3] - vertices[0])) * (vertices[5] - vertices[0]));
+            float get_depth(BoxFaces face) {
+                switch (face) {
+                    case BoxFaces::A:
+                    case BoxFaces::D:
+                        return CGAL::sqrt<float>((vertices[5]- vertices[0]).squared_length());
+                    case BoxFaces::B:
+                    case BoxFaces::E:
+                        return CGAL::sqrt<float>((vertices[3]- vertices[0]).squared_length());
+                    case BoxFaces::C:
+                    case BoxFaces::F:
+                        return CGAL::sqrt<float>((vertices[1]- vertices[0]).squared_length());
+                    default:
+                        throw std::runtime_error("This face does not exist");
                 }
+            }
+
+            [[nodiscard]] float volume() const{
+                return abs(cross_product((vertices[1] - vertices[0]),(vertices[3] - vertices[0])) * (vertices[5] - vertices[0]));
+            }
     };
 
     // TODO Extract this to a Pybind Typedef i guess ?
@@ -193,34 +192,6 @@ namespace boxy{
         [[nodiscard]] size_t size() const{
             return std::distance(_begin, _end);
         }
-    };
-
-    class NewVectorView{
-        size_t _begin;
-        size_t _end;
-
-        public:
-            NewVectorView(pointcloud_xyzc::const_iterator base, pointcloud_xyzc::const_iterator begin, pointcloud_xyzc::const_iterator end) : _begin(std::distance(base, begin)), _end(std::distance(base, end)){}
-            pointcloud_xyzc::iterator begin(pointcloud_xyzc::iterator base) {
-                return std::next(base, _begin);
-            }
-
-            pointcloud_xyzc::iterator end(pointcloud_xyzc::iterator base) {
-                return std::next(base, _end);
-            }
-
-            [[nodiscard]] pointcloud_xyzc::const_iterator cbegin(pointcloud_xyzc::const_iterator base) const{
-                return std::next(base, _begin);
-            }
-
-            [[nodiscard]] pointcloud_xyzc::const_iterator cend(pointcloud_xyzc::const_iterator base) const{
-                return std::next(base, _end);
-            }
-
-            size_t size() const{
-                return _end - _begin;
-            }
-
     };
 
     struct BestGridSplit{

@@ -6,11 +6,11 @@
 #message(..)
 # Setup targets
 # 1.) python taget
-pybind11_add_module(${BINARY}_python ../main.cpp)
+pybind11_add_module(BoxOffice ../main.cpp)
 file(GLOB sources LIST_DIRECTORIES true *.h *.cpp)
-target_compile_definitions(${BINARY}_python PRIVATE VERSION_INFO=${EXAMPLE_VERSION_INFO})
-target_link_libraries(${BINARY}_python PRIVATE tbb CGAL::CGAL CGAL::Eigen3_support)
-target_sources(${BINARY}_python PRIVATE ${sources})
+target_compile_definitions(BoxOffice PRIVATE VERSION_INFO=${EXAMPLE_VERSION_INFO})
+target_link_libraries(BoxOffice PRIVATE tbb CGAL::CGAL CGAL::Eigen3_support)
+target_sources(BoxOffice PRIVATE ${sources})
         #Evaluator.cpp Evaluator.h helpers.h helpers.cpp typedefs.h trim.h algorithm.cpp algorithm.h)
 
 # 2.) test / lib target

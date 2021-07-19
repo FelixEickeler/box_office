@@ -12,35 +12,28 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
 
     for(auto depth=0; depth<kappa; ++depth){
         int node_counter = 0;
-//            std::for_each(all_parents.begin(), all_parents.end(),
-//            [&tree, bbox_algorithm, depth, &node_counter](auto& fas_node){
         if(tree.depth() <= depth) break;
         auto& cur_hierarchy_nodes = tree.getNodes(depth);
         float cur_hierarchy_volume = std::accumulate(cur_hierarchy_nodes.begin(), cur_hierarchy_nodes.end(), 0.0f, [](float sum, auto& node){return node.bounding_box.volume() + sum;});
         std::cout << "hierarchy_volume:" << cur_hierarchy_volume / initial_bbox.volume()<< "\n";
-        for(auto& fas_node : cur_hierarchy_nodes) {
+
+        for(auto& fas_node : cur_hierarchy_nodes) {   //std::for_each(all_parents.begin(), all_parents.end(), [&tree, bbox_algorithm, depth, &node_counter](auto& fas_node){
             auto bbox = fas_node.bounding_box;
             std::array<BestSplit, 6> all_splits;
             // A=0; B=1; C=2 => see typdef::BoxFaces;
             // calculate each split for evey direction on evey face 3 faces x 2
             for (auto face = 0; face < 3; ++face) {
+                // project, change coordinate system and ...
                 auto current_face = static_cast<boxy::BoxFaces>(face);
                 auto projection_plane = bbox.get_plane(current_face);
                 auto coordinate_system2D = bbox.get_plane_coordinates2D(current_face);
+                // ... rasterize !
                 Rasterizer<512> grid(mvbb::minmax2D(bbox, coordinate_system2D));
-
                 std::vector<Point2D> projected_2D;
-//                    projected_2D.reserve(fas_node.points.size());
-
-                // project, change coordinate system and rasterize !
-                for(auto& point : fas_node.points){ // = fas_node.points.begin(); point != fas_node.points.end(); ++point) {
-//                    std::for_each(fas_node.points.cbegin(), fas_node.points.cend(),
-//                                  [projection_plane, coordinate_system2D, &grid](const auto &point) {
+                for(auto& point : fas_node.points){
                     auto proj = projection_plane.projection(std::get<0>(point)); //project to plane (3D)
                     auto point2d = coordinate_system2D.project_onto_plane(proj); //project to plane (2D) & new coordinate system
-                    //care not threading safe
                     grid.insert(point2d);
-//                                  });
                 }
 #if false
                 std::vector<Point> after_transform; // debug
@@ -94,7 +87,6 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
 //                }
                     }
 #endif
-
             }
 
             // select_best_split
@@ -155,7 +147,7 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
             auto gain = (cur_hierarchy_volume - fas_node.bounding_box.volume() + bbox1.volume() + bbox2.volume()) / cur_hierarchy_volume;
             std::string status = "rejected";
 
-            if(gain < gain_threshold){
+            if(gain < gain_threshold && bbox2.volume() > initial_bbox.volume()/1000 && bbox2.volume() > initial_bbox.volume() / 1000){
                 tree.emplace_back(depth+1, bbox1, fas_node.points.begin(), second_bbox_begins_at);
                 tree.emplace_back(depth+1, bbox2, second_bbox_begins_at, fas_node.points.end());
                 status = "accepted";
@@ -163,7 +155,7 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
             else{
                 fas_node.final = true;
             }
-
+            // print statistics
             std::cout << "\tLevel: " << depth << "\tbox: " << node_counter++ << "\tgain: " << gain << "\t"<< status << "\n";
         }
     }
