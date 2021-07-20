@@ -163,6 +163,24 @@ namespace boxy{
             [[nodiscard]] float volume() const{
                 return abs(cross_product((vertices[1] - vertices[0]),(vertices[3] - vertices[0])) * (vertices[5] - vertices[0]));
             }
+
+            template<class TPointCloud>
+            TPointCloud intersect(TPointCloud& points) const{
+                TPointCloud tmp;
+                std::array<Plane_3, 8> sides =  {get_plane(BoxFaces::A),    get_plane(BoxFaces::B), get_plane(BoxFaces::C),
+                                                 get_plane(BoxFaces::D),    get_plane(BoxFaces::E), get_plane(BoxFaces::F)};
+
+                for(auto& point : points){
+                    for(auto& plane : sides){
+                        if(plane.has_on_positive_side(std::get<0>(point))){
+                            goto skip_point;
+                        }
+                    }
+                    tmp.push_back(point);
+                    skip_point:;
+                }
+                return tmp;
+            }
     };
 
     // TODO Extract this to a Pybind Typedef i guess ?

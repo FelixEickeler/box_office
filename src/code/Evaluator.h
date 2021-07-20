@@ -41,7 +41,7 @@ class MvbbEvaluator{
         bool load_objects();
 
         boxy::BBox bounding_box() const;
-        std::remove_reference_t<boxy::pointcloud_xyzc> const& get_pointcloud();
+        boxy::pointcloud_xyzc& get_pointcloud();
         objectlist get_objectlist();
         BoxEntity& get_object(uint32_t object_id);
         pointcloud_xyzc copy_object_points(uint32_t object_id);

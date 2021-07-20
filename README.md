@@ -49,5 +49,10 @@ point cloud with std::partition. This leaves the bounding box hierarchy (called 
 [comment]: <> (![]&#40;/docs/bounding_hirachie.png&#41;)
 <img src="/docs/bounding_hirachie.png" height="700">
 
+### Python Interface
+[comment]: <>
+<img src="/docs/python_interface.png" height="260">
+
+
 ### CGal Conda
 https://anaconda.org/conda-forge/cgal

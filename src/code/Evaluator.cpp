@@ -95,7 +95,7 @@ bool MvbbEvaluator::load_objects() {
     return false;
 }
 
-std::remove_reference_t<boxy::pointcloud_xyzc> const& MvbbEvaluator::get_pointcloud(){
+boxy::pointcloud_xyzc& MvbbEvaluator::get_pointcloud(){
     return _pointcloud ;//helpers::xyzc_2_numpy(_pointcloud);
 }
 /// This should maybe throw if no data is loaded yet.
@@ -122,22 +122,12 @@ pointcloud_xyzc MvbbEvaluator::copy_object_points(uint32_t object_id){
 
 boxy::BBox MvbbEvaluator::bounding_box() const { //pointcloud_xyzc input
     auto start = std::chrono::high_resolution_clock::now();
-//    std::vector<Point_3> points_3;
-//    points_3.push_back(Point_3(1.0, 0.0, 0.5));
-//    points_3.push_back(Point_3(2.0, 2.0, 1.2));
-//    points_3.push_back(Point_3(3.0, 5.0, 4.5));
-//    K::Iso_cuboid_3 c3 = CGAL::bounding_box(points_3.begin(), points_3.end());
-//    std::cout << c3 << std::endl;
-//
-//    Surface_mesh sm;
     std::array<Point, 8> obb_points;
     CGAL::oriented_bounding_box(_pointcloud, obb_points,  CGAL::parameters::use_convex_hull(true).point_map(boxy::Point_map())); //CP::geom_traits(PPoint)
-//    std::cout << "Elapsed time: " << timer.time() << std::endl;
     auto finish = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = finish - start;
     std::cout << "Elapsed time: " << elapsed.count() << " s\n";
     boxy::BBox bbox(obb_points);
-//    BBox obb_points;
     return bbox;
 }
 

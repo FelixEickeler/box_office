@@ -1,9 +1,7 @@
 #include "code/Evaluator.h"
-#include "code/typedefs.h"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
-#include "code/helpers.h"
 #include "code/mvbb_algorithm.h"
 #include "code/pybind_helpers.h"
 
@@ -27,9 +25,10 @@ PYBIND11_MODULE(BoxOffice, module_handle){
             .def("get_vertices" ,[](const BBox& self){
                 return helpers::bbox_2_numpy(self);
             })
-            .def("volume", &BBox::volume);
-
-
+            .def("volume", &BBox::volume)
+            .def("intersect", [](const BBox& self, MvbbEvaluator& scene){
+                return self.intersect<pointcloud_xyzc>(scene.get_pointcloud());
+            });
 
     using _node = mvbb::FitAndSplitNode<pointcloud_xyzc>;
     py::class_<_node>(module_handle, "BoxNode")
@@ -50,6 +49,9 @@ PYBIND11_MODULE(BoxOffice, module_handle){
             })
             .def("decompose", [](BoxEntity& self, int depth, float gain_threshold) {
                 return self.decompose(depth, gain_threshold);
+            })
+            .def("decompose", [](BoxEntity& self, int depth) {
+                return self.decompose(depth);
             });
 
     py::class_<MvbbEvaluator>(module_handle, "BoxScene")
