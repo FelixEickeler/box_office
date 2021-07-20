@@ -2,33 +2,8 @@
 // Created by felix on 12.06.2021.
 //
 #include "helpers.h"
+//#include "pybind_helpers.h"
 
-np_array helpers::xyzc_2_numpy(VectorView<pointcloud_xyzc::iterator>objr) {
-    pointcloud_xyzc partial_cloud;
-    std::copy(objr.begin(), objr.end(),back_inserter(partial_cloud));
-    return xyzc_2_numpy(partial_cloud);
-}
-
-
-np_array helpers::xyzc_2_numpy(const pointcloud_xyzc &pointcloud) {
-
-    //create numpy memory space
-    auto shape = std::array<ssize_t, 2>{static_cast<ssize_t>(pointcloud.size()), 4};
-    np_array ext_pointcloud(shape);
-
-    // copy data to numpy array, Observation: <50m point cloud its not even worth to think about par_unseq
-    auto ext_begin = ext_pointcloud.mutable_data();
-    std::for_each(pointcloud.cbegin(), pointcloud.cend(),
-                  [&point_cloud = std::as_const(pointcloud), &ext_begin = std::as_const(ext_begin)](
-                          auto const &cgal_point) {
-                      int idx = (&cgal_point - &point_cloud[0]) * 4;
-                      ext_begin[idx + 0] = std::get<0>(cgal_point).x();
-                      ext_begin[idx + 1] = std::get<0>(cgal_point).y();
-                      ext_begin[idx + 2] = std::get<0>(cgal_point).z();
-                      ext_begin[idx + 3] = float(std::get<1>(cgal_point));
-                  });
-    return ext_pointcloud;
-}
 
 //auto helpers::split(const std::string &str, const char delim) {
 //    std::vector<std::string> parts;
@@ -61,44 +36,35 @@ bool helpers::xyzc_objecttype_compare(const XYZC &xyzc, const XYZC &lookup) {
     return std::get<1>(xyzc) < std::get<1>(lookup);
 }
 
-np_array helpers::bbox_2_numpy(BBox bbox) {
-    np_array numpy_bbox({8,3});
-    auto nbm = numpy_bbox.mutable_data();
+std::tuple<CGAL::Surface_mesh<Point>, std::array<Point, 4>> Plane2Mesh(Point o1, Point p1, Point p2, bool swap_normal_direction) {
+    auto e0 = o1;
+    auto e1 = p1 ;
+    auto e2 = p2;
+    auto _e3 = CGAL::cross_product(e1- e0,  e2- e0);
+    _e3= (_e3 / CGAL::sqrt(_e3.squared_length()));
+    auto e3 = e0 + _e3;
+    std::array<Point, 4> plane_system{e0, e1, e2, e3};
 
-    auto cnt = 0;
-    for(auto& point : bbox.get_vertices()){
-        nbm[cnt + 0] = float(point.x());
-        nbm[cnt + 1] = float(point.y());
-        nbm[cnt + 2] = float(point.z());
-        cnt+=3;
+    if(swap_normal_direction){
+        _e3 *= -1;
     }
-    return numpy_bbox;
+    //box thickness
+    auto eth = (p1 - e0) * 0.001;
+    std::array<Point , 8> obb_points;
+    obb_points[0] = p2  - eth;
+    obb_points[1] = o1  - eth;
+    obb_points[2] = o1 - _e3 - eth;
+    obb_points[3] = p2 - _e3 - eth;
+
+    obb_points[4] = p2 - _e3 + eth;
+    obb_points[5] = p2  + eth;
+    obb_points[6] = o1  + eth;
+    obb_points[7] = o1 - _e3 + eth;
+
+    CGAL::Surface_mesh<Point> plane_mesh;
+    auto box = CGAL::make_hexahedron(obb_points[0], obb_points[1], obb_points[2], obb_points[3],
+                                     obb_points[4], obb_points[5], obb_points[6], obb_points[7],
+                                     plane_mesh);
+    return {plane_mesh, plane_system};
+
 }
-
-std::vector<Point> helpers::numpy_2_points(py::array_t<float> numpy83) {
-    py::buffer_info buf1 = numpy83.request();
-    auto *ptr1 = (float *) buf1.ptr;
-    size_t rows = buf1.shape[0];
-    size_t cols = buf1.shape[1];
-    if(cols != 3){
-        throw std::runtime_error("This numpy array must be Nx3; 8 for each vertex and 3 for x,y,z !");
-    }
-
-    std::vector<Point> tmp;
-    for (size_t idx = 0; idx < rows; idx++)
-        tmp.emplace_back(ptr1[idx*cols + 0], ptr1[idx*cols + 1], ptr1[idx*cols + 2]);
-    return tmp;
-}
-
-Point helpers::numpy31_2_point(py::array_t<float> numpy31) {
-    py::buffer_info buf1 = numpy31.request();
-    auto *ptr1 = (float *) buf1.ptr;
-    size_t rows = buf1.shape[0];
-    size_t cols = buf1.shape[1];
-    if(rows != 3 || cols != 1){
-        throw std::runtime_error("This numpy array must be 3x1; 3 for x,y,z !");
-    }
-
-    return Point(ptr1[0], ptr1[1], ptr1[2]);
-}
-

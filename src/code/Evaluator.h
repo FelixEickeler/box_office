@@ -1,9 +1,9 @@
 #ifndef MVBB_EVALUATOR_H
 #define MVBB_EVALUATOR_H
 #define BOOST_BIND_GLOBAL_PLACEHOLDERS
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include <pybind11/numpy.h>
+//#include <pybind11/pybind11.h>
+//#include <pybind11/stl.h>
+//#include <pybind11/numpy.h>
 #include <CGAL/Optimal_bounding_box/Oriented_bounding_box_traits_3.h>
 
 #include <filesystem>
@@ -41,9 +41,10 @@ class MvbbEvaluator{
         bool load_objects();
 
         boxy::BBox bounding_box() const;
-        boxy::np_array get_pointcloud();
+        std::remove_reference_t<boxy::pointcloud_xyzc> const& get_pointcloud();
         objectlist get_objectlist();
-        boxy::pointcloud_xyzc get_object(uint32_t object_id) const;
+        BoxEntity& get_object(uint32_t object_id);
+        pointcloud_xyzc copy_object_points(uint32_t object_id);
 };
 
 MvbbEvaluator create_mvbbevaluator(const std::string& point_src, const std::string& class_src);

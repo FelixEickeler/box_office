@@ -14,7 +14,7 @@ std::vector<mvbb::FitAndSplitNode<pointcloud_xyzc>> BoxEntity::decompose(int dep
     }
     else{
 //        std::vector<mvbb::FitAndSplitNode<pointcloud_xyzc>> collection;
-        auto previous_levels = this->tree_hierarchy.get_finalized(depth-1);
+        auto previous_levels = this->tree_hierarchy.get_finalized(depth);
         auto this_level = this->tree_hierarchy.getNodes(depth);
         for(auto& tl : this_level){
             previous_levels.push_back(tl);

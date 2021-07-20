@@ -5,6 +5,8 @@
 #include <pybind11/numpy.h>
 #include "code/helpers.h"
 #include "code/mvbb_algorithm.h"
+#include "code/pybind_helpers.h"
+
 namespace py = pybind11;
 
 BBox create_from_list(py::array_t<float> numpy83){
@@ -53,9 +55,13 @@ PYBIND11_MODULE(BoxOffice, module_handle){
     py::class_<MvbbEvaluator>(module_handle, "BoxScene")
             .def(py::init<>())
             .def("list_objects", &MvbbEvaluator::get_objectlist) //only work if scene is loaded
-            .def("get_object", [](const MvbbEvaluator& self, int object_id) {
+            .def("get_points", [](MvbbEvaluator& self) {
+                return helpers::xyzc_2_numpy(self.get_pointcloud());
+            })
+            .def("get_object", [](MvbbEvaluator& self, int object_id) {
                 return self.get_object(object_id);
             });
+    // get_points
 
     module_handle.def("create_scene", [](const std::string& point_src, const std::string& class_src) {
         return create_mvbbevaluator(point_src, class_src);

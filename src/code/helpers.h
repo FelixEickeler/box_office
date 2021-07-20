@@ -4,6 +4,7 @@
 
 #ifndef TEST_BIND_HELPER_H
 #define TEST_BIND_HELPER_H
+
 #include "typedefs.h"
 #include <fstream>
 #include <string>
@@ -13,20 +14,12 @@
 #include "trim.h"
 #include <CGAL/IO/write_off_points.h>
 
+
+std::tuple<CGAL::Surface_mesh<boxy::Point>, std::array<boxy::Point,4>> Plane2Mesh(boxy::Point o1, boxy::Point p1, boxy::Point p2, bool swap_normal_direction=false);
+
 using namespace boxy;
 
 namespace  helpers {
-
-    // TODO fix to iterators to avoid copy before, also make these in a pybind file !
-    np_array xyzc_2_numpy(const pointcloud_xyzc &pointcloud);
-
-    np_array xyzc_2_numpy(VectorView<pointcloud_xyzc::iterator>objr);
-
-    np_array bbox_2_numpy(BBox bbox);
-
-    Point numpy31_2_point(py::array_t<float> numpy31);
-
-    std::vector<Point> numpy_2_points(py::array_t<float> numpy31);
 
     template <typename T>
     struct range_t{
@@ -71,6 +64,7 @@ namespace  helpers {
             ins.close();
         } else
             std::cout << "Could not open: " + path.generic_string() << std::endl;
+        std::cout << "Reading File in lines:" << entries.size() << " fround\n";
         return entries;
     }
 

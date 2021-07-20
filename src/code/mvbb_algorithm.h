@@ -6,7 +6,6 @@
 #define TEST_BIND_ALGORITHM_H
 #include "typedefs.h"
 #include "helpers.h"
-#include "helpers_nobind.h"
 #include "rasterizer.h"
 #include <functional>
 #include <algorithm>

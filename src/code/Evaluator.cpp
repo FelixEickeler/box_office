@@ -1,6 +1,7 @@
 
 #include "Evaluator.h"
 #include "helpers.h"
+#include "pybind_helpers.h"
 #include <execution>
 #include <algorithm>
 #include <array>
@@ -55,6 +56,7 @@ bool MvbbEvaluator::load_points() {
         } else {
             hash_key = points_from_file[0][1];
         }
+        std::cout << "Loading Points from"  << _pointcloud_src << "\n";
         std::for_each(points_from_file.cbegin() + 1, points_from_file.cend(), [this](auto const &obj) {
             auto p = Point(std::stof(obj[0]), std::stof(obj[1]), std::stof(obj[2]));
             auto i = std::stoi(obj[3]);
@@ -62,6 +64,7 @@ bool MvbbEvaluator::load_points() {
         });
         // sort everything by dimension type => x => y => z
         std::sort(std::execution::par_unseq, _pointcloud.begin(), _pointcloud.end(), helpers::xyzc_compare);
+        std::cout << _pointcloud.size() << " Points have been added to this scene\n";
         return true;
     }
     return false;
@@ -83,7 +86,7 @@ bool MvbbEvaluator::load_objects() {
         for(auto const &obj : helpers::range(objects.begin()+1, objects.end())){
             int id = std::stoi(obj[0]);
             auto obj_name = obj[1];
-            boxy::pointcloud_xyzc tmp = this->get_object(id);
+            boxy::pointcloud_xyzc tmp = this->copy_object_points(id);
             auto box_entity = BoxEntity(static_cast<int>(id), obj_name, tmp);
             _objectlist.insert_or_assign(id, box_entity);
         };
@@ -92,8 +95,8 @@ bool MvbbEvaluator::load_objects() {
     return false;
 }
 
-boxy::np_array MvbbEvaluator::get_pointcloud() {
-    return helpers::xyzc_2_numpy(_pointcloud);
+std::remove_reference_t<boxy::pointcloud_xyzc> const& MvbbEvaluator::get_pointcloud(){
+    return _pointcloud ;//helpers::xyzc_2_numpy(_pointcloud);
 }
 /// This should maybe throw if no data is loaded yet.
 /// TODO change logic somehow.
@@ -102,11 +105,17 @@ objectlist MvbbEvaluator::get_objectlist() {
     return _objectlist;
 }
 
-pointcloud_xyzc MvbbEvaluator::get_object(uint32_t object_id) const {
+BoxEntity& MvbbEvaluator::get_object(uint32_t object_id) {
+    if (!_objectlist.count(object_id)) {
+        throw std::runtime_error("This id is not present in your dataset");
+    }
+    return _objectlist.at(object_id);
+}
+pointcloud_xyzc MvbbEvaluator::copy_object_points(uint32_t object_id){
     auto tmp_comp =  XYZC {Point(), object_id};
-//    pointcloud_xyzc tmp;
-//    std::copy_if (_pointcloud.begin(), _pointcloud.end(), std::back_inserter(tmp), [object_id](auto& point){return std::get<1>(point) == object_id;});
-//    return tmp;
+    pointcloud_xyzc tmp;
+    std::copy_if (_pointcloud.begin(), _pointcloud.end(), std::back_inserter(tmp), [object_id](auto& point){return std::get<1>(point) == object_id;});
+    return tmp;
     return pointcloud_xyzc(std::lower_bound(_pointcloud.begin(), _pointcloud.end(), tmp_comp, helpers::xyzc_objecttype_compare),
                       std::upper_bound(_pointcloud.begin(), _pointcloud.end(), tmp_comp, helpers::xyzc_objecttype_compare));
 }
@@ -135,8 +144,8 @@ boxy::BBox MvbbEvaluator::bounding_box() const { //pointcloud_xyzc input
 MvbbEvaluator create_mvbbevaluator(const std::string &point_src, const std::string &class_src) {
     auto self = MvbbEvaluator();
     self.set_pointcloud_path(point_src);
+    self.load_points();
     self.set_objectlist_path(class_src);
     self.load_objects();
-    self.load_points();
     return self;
 }

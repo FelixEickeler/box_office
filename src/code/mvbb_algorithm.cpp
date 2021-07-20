@@ -2,6 +2,8 @@
 // Created by felix on 18.07.2021.
 //
 #include "mvbb_algorithm.h"
+#include "helpers.h"
+
 using namespace mvbb;
 
 FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3D, Algo_Base<TPointCloudType> *const bbox_algorithm, uint32_t kappa, float gain_threshold) {

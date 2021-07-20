@@ -7,7 +7,7 @@
 #define BOOST_BIND_GLOBAL_PLACEHOLDERS
 //#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Simple_cartesian.h>
-#include <pybind11/numpy.h>
+//
 #include <tuple>
 #include <filesystem>
 #include <CGAL/property_map.h>
@@ -166,8 +166,7 @@ namespace boxy{
     };
 
     // TODO Extract this to a Pybind Typedef i guess ?
-    namespace py = pybind11;
-    using np_array = py::array_t<float, py::array::c_style> ;
+
 //    using objectlist = std::unordered_map<int, std::string>;
     using Path = std::filesystem::path;
 
