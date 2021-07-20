@@ -1,4 +1,5 @@
-FROM debian:bullseye-slim
+#FROM debian:bullseye-slim
+FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV LANG C.UTF-8
@@ -83,7 +84,7 @@ RUN git clone git://github.com/ethz-asl/libpointmatcher.git \
   && make install
 
 
-RUN pip3 install numpy
+RUN pip3 install numpy scikit-learn scipy open3d
 # create user, ids are temporary
 ARG USER_ID=1000
 RUN useradd -m --no-log-init boxy && yes brucelee | passwd boxy
