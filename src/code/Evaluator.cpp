@@ -46,7 +46,7 @@ std::string MvbbEvaluator::get_objectlist_path() const{
 
 bool MvbbEvaluator::load_points() {
     auto points_from_file = helpers::read_file<4>(_pointcloud_src);
-    _pointcloud.reserve(points_from_file.size());
+//    _pointcloud.reserve(points_from_file.size());
     if(points_from_file[0][0] == "#") {
         if (hash_key.length() > 0) {
             if (hash_key != points_from_file[0][1]) {
@@ -63,7 +63,7 @@ bool MvbbEvaluator::load_points() {
             _pointcloud.emplace_back(std::forward_as_tuple(p,i));
         });
         // sort everything by dimension type => x => y => z
-        std::sort(std::execution::par_unseq, _pointcloud.begin(), _pointcloud.end(), helpers::xyzc_compare);
+        std::sort( _pointcloud.begin(), _pointcloud.end(), helpers::xyzc_compare);
         std::cout << _pointcloud.size() << " Points have been added to this scene\n";
         return true;
     }

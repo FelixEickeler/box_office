@@ -31,7 +31,7 @@ RUN apt-get clean && apt-get update && apt-get install -y \
     libtbb-dev \
     zlib1g-dev \
     python3 gosu sudo openssh-server gdb \
-    htop nano python3-distutils libpython3-dev python3-pip libtbb-dev
+    htop nano python3-distutils libpython3-dev python3-pip libtbb-dev rsync valgrind
 
 # RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
 #     build-essential \
