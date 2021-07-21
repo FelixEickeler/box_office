@@ -187,9 +187,9 @@ TEST (algorithm_testing /*test suite name*/, min_split_2 /*test name*/) {
     auto [rasterizer, _]  = GenerateRasterizer3x7();
     auto ms_ex = rasterizer.best_split<direction_ex>();
     auto ms_ey = rasterizer.best_split<direction_ey>();
-    Eigen::Vector2f ex_val;  ex_val << 3,0;
+    Vector2f ex_val;  ex_val << 3,0;
 //    EXPECT_TRUE(false) << "Check this, as the res increases from the grid used, but should be fine in continuous space !" ;
-    Eigen::Vector2f ey_val;  ey_val << 0,0.4;
+    Vector2f ey_val;  ey_val << 0,0.4;
     ASSERT_EQ(ms_ex.begin_cut, ex_val);
     ASSERT_FLOAT_EQ(ms_ex.area, 8.4);
     ASSERT_EQ(ms_ey.begin_cut, ey_val);

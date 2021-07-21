@@ -7,6 +7,7 @@
 #define BOOST_BIND_GLOBAL_PLACEHOLDERS
 //#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Simple_cartesian.h>
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 //
 #include <tuple>
 #include <filesystem>
@@ -17,17 +18,18 @@
 #include <iterator>
 
 namespace boxy{
-    typedef CGAL::Simple_cartesian<float> Kernel;
+    typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
+//    typedef CGAL::Simple_cartesian<float> Kernel;
     typedef Kernel::Point_3 Point;
     typedef std::tuple<Point, uint32_t> XYZC;
     typedef CGAL::Nth_of_tuple_property_map<0, XYZC> Point_map;
     typedef CGAL::Nth_of_tuple_property_map<1, XYZC> Class_map;
     typedef std::vector<XYZC> pointcloud_xyzc;
     using Plane_3 = Kernel::Plane_3;
-    using Point2D = Eigen::Vector2f; //Kernel::Point_2;
+    using Point2D = Eigen::Vector2d; //Kernel::Point_2;
     using Vector_3 = Kernel::Vector_3;
-    using Vector3f = Eigen::Vector3f;
-    using Vector2f = Eigen::Vector2f;
+    using Vector3f = Eigen::Vector3d;
+    using Vector2f = Eigen::Vector2d;
     using Grid = Eigen::Matrix2Xf;
     using MatrixXu = Eigen::Matrix<uint32_t, Eigen::Dynamic, Eigen::Dynamic>;
     using VectorXu = Eigen::Matrix<uint32_t , Eigen::Dynamic, 1>;
@@ -54,7 +56,7 @@ namespace boxy{
     }
 
     inline Point eigen_to_cgal(Vector3f point){
-        Point* cgal= reinterpret_cast<Point*>(const_cast<float*>(point.data()));
+        Point* cgal= reinterpret_cast<Point*>(const_cast<double*>(point.data()));
         return *cgal;
     }
 
@@ -218,9 +220,9 @@ namespace boxy{
 
     struct BestSplit{
         double area;
-        Eigen::Vector2f begin_cut;
-        Eigen::Vector2f end_cut;
-        Eigen::Vector2f origin;
+        Vector2f begin_cut;
+        Vector2f end_cut;
+        Vector2f origin;
     };
 }
 

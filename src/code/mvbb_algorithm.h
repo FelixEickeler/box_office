@@ -17,6 +17,7 @@
 #include <CGAL/IO/write_off_points.h>
 #include <CGAL/Surface_mesh.h>
 #include <CGAL/Origin.h>
+#include <filesystem>
 
 //#include <boost/range>
 
@@ -141,7 +142,7 @@ namespace mvbb {
         std::array<Point, 8> vertices;
         if (points3D.size() > 10) {
             try {
-                CGAL::oriented_bounding_box(points3D, vertices, CGAL::parameters::use_convex_hull(true).point_map(boxy::Point_map()));
+                CGAL::oriented_bounding_box(points3D, vertices, CGAL::parameters::point_map(boxy::Point_map())); //CGAL::parameters::use_convex_hull(true).
             }
             catch (std::exception &e) {
                 std::cout << e.what() << '\n';

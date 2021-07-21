@@ -18,6 +18,11 @@ target_link_libraries(valgrind_decompose PRIVATE CGAL::CGAL CGAL::Eigen3_support
 target_include_directories(valgrind_decompose PUBLIC ../code)
 target_link_libraries(valgrind_decompose PUBLIC ${CMAKE_PROJECT_NAME}_lib )
 
+add_executable(minimal_example bbox_minimal.cpp)
+target_link_libraries(minimal_example PRIVATE CGAL::CGAL CGAL::Eigen3_support)
+target_include_directories(minimal_example PUBLIC ../code)
+target_link_libraries(minimal_example PUBLIC ${CMAKE_PROJECT_NAME}_lib )
+
 #pybind11::module pybind11::lto pybind11::windows_extras
 
 list(REMOVE_ITEM TEST_SOURCES "${PROJECT_SOURCE_DIR}/tests/valgrind_decompose_target.cpp")

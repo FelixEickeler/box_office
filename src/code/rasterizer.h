@@ -21,8 +21,8 @@ namespace mvbb {
 //        Eigen::Matrix<uint32_t ,TRaster,TRaster> grid = Eigen::Matrix<uint32_t, TRaster,TRaster>::Zero();//(TRaster, TRaster);
 
         std::array<float, 4> min_max;
-        Eigen::Vector2f scale;
-        Eigen::Vector2f shift;
+        Vector2f scale;
+        Vector2f shift;
 
     public:
         explicit Rasterizer(std::array<float, 4> _min_max) : min_max{_min_max},
@@ -59,7 +59,7 @@ namespace mvbb {
         }
 
         Point2D from_grid(const Eigen::Matrix<uint32_t, 2, 1> &grid_point) {
-            return grid_point.cast<float>().cwiseProduct(scale) + shift;
+            return grid_point.cast<double>().cwiseProduct(scale) + shift;
         }
 
         /// Inserts point in the grid, it uses integer casting to deterimin the position. However the grid ('inserted coorindate) is shifted by 0.5 to compensate.

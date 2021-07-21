@@ -54,9 +54,9 @@
 //}
 
 int main(int argc, char* args[]){
+
     auto path = "../../../python/tests/data/sample2_full.pcs";
     MvbbEvaluator eval;
     eval.set_pointcloud_path(path);
     eval.load_points();
-
  }

@@ -5,6 +5,7 @@ set(BINARY ${CMAKE_PROJECT_NAME})
 
 message(..)
 #set(CMAKE_CXX_FLAGS_DEBUG "-g -O2")
+set(CMAKE_BUILD_TYPE "Release")
 
 add_compile_definitions (CGAL_DISABLE_ROUNDING_MATH_CHECK=ON)
 # Setup foreign projects
