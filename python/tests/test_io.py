@@ -1,6 +1,6 @@
 import unittest
 
-from python.object_list import ObjectList
+from python import ObjectList
 
 
 class TestMVBB(unittest.TestCase):

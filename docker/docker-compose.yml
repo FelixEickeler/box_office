@@ -11,6 +11,7 @@ services:
     shm_size: "32gb"
     volumes:
         - ../:/home/boxy/BoxOffice
+        #- /home/fnoic/Desktop/data/box_office_data
     ports:
         - "2242:22"
     environment:

@@ -1,29 +1,16 @@
-import argparse
-from pathlib import Path
-import unittest
+# This is a sample Python script.
 
-from tests.tests import run_test
+# Press Shift+F10 to execute it or replace it with your code.
+# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 
 
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Strg+F8 to toggle the breakpoint.
+    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--eval-only", action="store_true", help="perform evaluation only")
-    parser.add_argument("--input", type=Path, default=Path("."), help="Input Pointcloud -  Tests for input format")
-    parser.add_argument("--output", type=Path, default=Path("."), help="Output Boxdimensions, and graphs")
-    parser.add_argument("--tests", action="store_true", help="runs tests")
+    print_hi('PyCharm')
 
-    args = parser.parse_args()
-    if args.test:
-        print("Testing on the way")
-        run_test()
-    else:
-        print("Input path: ", args.input)
-        print("output path: ", args.output)
-        print("start calculating ...")
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
