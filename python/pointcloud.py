@@ -1,6 +1,9 @@
 import numpy as np
+import os
+
 from down import rand_samp, min_dist_samp
 from up import near_one, near_k
+
 import BoxOffice as boff
 
 
@@ -68,6 +71,17 @@ class Pointcloud:
             else:
                 raise ValueError('method unknown, gtfo')
 
-    def get_bbox_inliers(self, decomp_depth, class_of_interest):
-        boxoffice = bof.create_scene(point_src, class_src).get_object(class_of_interest)
-        a = 'slow down'
+    def get_bbox_inliers(self, class_src, class_of_interest, depth, gain, source_path):
+        """
+        points_src is txt path- temp storage to txt (save-read-remove)
+        """
+        points_src = source_path + 'temporary_dump.txt'
+        self.save_to_txt(points_src)
+        with open(points_src, 'r') as original: data = original.read()
+        with open(points_src, 'w') as modified: modified.write("# 00306df8-b625-486b-b4cb-ffce06293ab7\n" + data)
+        boxes = boff.create_scene(points_src, class_src).get_object(class_of_interest).decompose(depth, gain)
+        os.remove(points_src)
+        for box in boxes:
+            box_vertices = box.bounding_box.get_vertices()
+
+        return box_vertices
