@@ -59,7 +59,7 @@ class Pointcloud:
 
             return cloud
 
-    def sample_up(self, method, sampling_parameter, path_to_save):
+    def sample_up(self, method, sampling_parameter):
         """
         available methods: near_one, near_k
         """
@@ -67,11 +67,12 @@ class Pointcloud:
             print('please use downsampled clouds for upsampling only')
         else:
             if method == 'near_one':
-                near_one(self.xyzl, self.parent_cloud.xyz, self.parent_cloud.xyz.shape[0], self.trial, path_to_save)
+                upsampled_cloud = near_one(self.xyzl, self.parent_cloud[:, :-1])
             elif method == 'near_k':
-                near_k(self.xyzl, self.parent_cloud.xyz, self.parent_cloud.xyz.shape[0], self.trial, sampling_parameter, path_to_save)
+                upsampled_cloud = near_k(self.xyzl, self.parent_cloud[:, :-1], sampling_parameter)
             else:
                 raise ValueError('method unknown, gtfo')
+            return upsampled_cloud
 
     def get_bbox_inliers(self, class_src, class_of_interest, depth, gain, source_path):
         """
@@ -83,8 +84,16 @@ class Pointcloud:
         with open(points_src, 'w') as modified: modified.write("# 00306df8-b625-486b-b4cb-ffce06293ab7\n" + data)
         boxes = boff.create_scene(points_src, class_src).get_object(class_of_interest).decompose(depth, gain)
         os.remove(points_src)
+
+        inlier_points = []
+        fpr_0s = []
+
         for box in boxes:
             box_vertices = box.bounding_box.get_vertices()
-            box_inliers = points_from_box()
+            [box_inliers, fpr_0] = points_from_box(self.xyzl, box_vertices)
+            inlier_points.append(box_inliers)
+            fpr_0s.append(fpr_0)
 
-        return box_vertices
+            # box_inliers = points_from_box(self.xyz, box_vertices)
+
+        return box_vertices, inlier_points
