@@ -20,6 +20,7 @@ class Pointcloud:
         self.ID = None # can be 'full', 'down', or 'up'
         self.sampling_type = None
         self.sampling_parameter = None
+        self.bboxes = []
 
     def load_from_txt(self, txt_cloud_path):
         load = np.float32(np.loadtxt(txt_cloud_path))
@@ -83,6 +84,7 @@ class Pointcloud:
         with open(points_src, 'r') as original: data = original.read()
         with open(points_src, 'w') as modified: modified.write("# 00306df8-b625-486b-b4cb-ffce06293ab7\n" + data)
         boxes = boff.create_scene(points_src, class_src).get_object(class_of_interest).decompose(depth, gain)
+        self.bboxes = boxes
         os.remove(points_src)
 
         inlier_points = []
