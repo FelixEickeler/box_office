@@ -1,9 +1,8 @@
-#FROM debian:bullseye-slim
-FROM ubuntu:20.04
+FROM debian:bullseye-slim
+# FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV LANG C.UTF-8
-
 
 RUN apt-get clean && apt-get update && apt-get install -y \
     build-essential \
@@ -32,19 +31,6 @@ RUN apt-get clean && apt-get update && apt-get install -y \
     zlib1g-dev \
     python3 gosu sudo openssh-server gdb \
     htop nano python3-distutils libpython3-dev python3-pip libtbb-dev rsync valgrind
-
-# RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-#     build-essential \
-#     cmake \
-#     libopencv-dev \
-#     libsuitesparse-dev \
-#     tar \
-#     libboost-all-dev libgmp10-dev \
-#     libmpfr-dev zlib1g-dev \
-#     libeigen3-dev libglew1.5-dev libipe-dev \
-#     libmpfi-dev libqglviewer-dev-qt5 \
-#     libtbb-dev git \
-#
 
 # Get CGAL (optional I guess ?)Dependencies
 RUN git clone https://github.com/STORM-IRIT/OpenGR.git --depth 1 \
@@ -84,31 +70,16 @@ RUN git clone git://github.com/ethz-asl/libpointmatcher.git \
   && make install
 
 
-RUN pip3 install numpy scikit-learn scipy open3d
+RUN pip3 install numpy scikit-learn scipy
+RUN pip install --user --pre https://storage.googleapis.com/open3d-releases-master/python-wheels/open3d-0.13.0+9a49100-cp39-cp39-linux_x86_64.whl
+
+
 # create user, ids are temporary
 ARG USER_ID=1000
 RUN useradd -m --no-log-init boxy && yes brucelee | passwd boxy
 RUN usermod -aG sudo boxy
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-# clone Helios++
-#WORKDIR /home/boxy
-#RUN git clone https://github.com/3dgeo-heidelberg/helios.git helios++
-
-# clone & build LAStools
-#WORKDIR /home/phaethon/helios++
-#RUN git clone https://github.com/LAStools/LAStools.git lib/LAStools
-#RUN mkdir lib/LAStools/_build && cd lib/LAStools/_build && cmake .. && make -j $(nproc)
-
-# build helios ++
-#RUN mkdir _build && cd _build && cmake .. && make -j $(nproc)
-
-#RUN chown -R phaethon:sudo "/home/phaethon/helios++"
-#RUN chmod -R a=r,a+X,u+w "/home/phaethon/helios++"
-#RUN chmod 755 "/home/phaethon/helios++/_build/helios"
-
-#RUN echo "PATH=$PATH:/home/phaethon/helios++/_build" >> /home/phaethon/.profile
-#ENV PATH "$PATH:/home/phaethon/helios++/_build"
 
 # WORKDIR /home/boxy/
 
