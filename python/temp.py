@@ -16,6 +16,7 @@ cloudy.load_from_txt(point_src)
 # SAMPLE DOWN #
 ###############
 
+# TODO: add loop adaptive to method
 # down_method = ['rand_samp', 'min_dist_samp']
 # for method in down_method:
 
@@ -42,19 +43,24 @@ gain_thresh = 0.99
 
 oh_my_path = "../data/active/testing_2/intermediate/bbox_dump_temp/"
 box_vertices = []
+box_inliers = []
 for in_cloud in downsampled:
     box_vertices.append(cloudy.get_bbox_inliers(class_src, class_of_interest, decomp_depth, gain_thresh, oh_my_path))
-
-szene = bof.create_scene(point_src, class_src)
-boxof = szene.get_object(class_of_interest)
-
+    box_inliers.append()
 
 #############
 # SAMPLE UP #
 #############
 
-up_method = ['near_one', 'near_k']
-k = 5
+k = [3, 5, 7]
+
+# TODO: add loop adaptive to method
+# up_method = ['near_one', 'near_k']
+# for method in up_method:
+
+
+
+
 
 # evaluate
 

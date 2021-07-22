@@ -111,16 +111,11 @@ def points_from_box_OLD(cloud, bbox, data_path, trial_name):
 
     return fpr_0
 
-def points_from_box(cloud, bbox, data_path, trial_name):
+def points_from_box(cloud, bbox):
     """workaround for get_point_indices_within_bounding_box (o3d OBB)
 
     in: bbox and cloud in n x 3 numpy arrays
     out: points of cloud that are within bbox"""
-
-    # nr_boxes = int(bbox.shape[0] / 8)
-    # bboxes = []
-    # for i in range(nr_boxes):
-    # current_box = bbox[i*8: i*8+8, :]
 
     cloud_np = np.array(cloud[:, :3], copy=True)
     np.savetxt(data_path + '/active/' + trial_name + '/intermediate/cloud_IN.txt', cloud_np)

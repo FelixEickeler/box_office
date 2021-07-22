@@ -3,6 +3,7 @@ import os
 
 from down import rand_samp, min_dist_samp
 from up import near_one, near_k
+from bbox import points_from_box
 
 import BoxOffice as boff
 
@@ -52,6 +53,7 @@ class Pointcloud:
             cloud = Pointcloud()
             cloud.xyzl = processed_cloud
             cloud.ID = 'down'
+            cloud.parent_cloud = self.xyzl
             cloud.sampling_type = method
             cloud.sampling_parameter = sampling_parameter
 
@@ -83,5 +85,6 @@ class Pointcloud:
         os.remove(points_src)
         for box in boxes:
             box_vertices = box.bounding_box.get_vertices()
+            box_inliers = points_from_box()
 
         return box_vertices
