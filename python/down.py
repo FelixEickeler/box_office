@@ -17,7 +17,16 @@ def stat_out(cloud, raw_no, stat_out_mean_k, std_dev_mul_thresh, trial_name):
     return rem_no, v
 
 
-def rand_samp(cloud, raw_no, rand_ratio, trial_name, active_path):
+def rand_samp(cloud, rand_ratio):
+    raw_no = cloud.shape[0]
+    rem_no = int(round(raw_no * rand_ratio, 0))
+    rem_ind = np.random.choice(raw_no, size=rem_no, replace=False)
+    rem_cloud = cloud[rem_ind, :]
+
+    return rem_cloud
+
+
+def rand_samp_old(cloud, raw_no, rand_ratio, trial_name, active_path):
     print('   ->random sampling')
     np_cloud = cloud # np.asarray(cloud)
     rem_no = int(round(raw_no * rand_ratio, 0))
@@ -35,7 +44,34 @@ def rand_samp(cloud, raw_no, rand_ratio, trial_name, active_path):
     return rem_no, v, rem_cloud_np
 
 
-def min_dist_samp_np(cloud, raw_no, min_dist, trial_name, active_path):
+def min_dist_samp(cloud, min_dist):
+    tracker = np.zeros((cloud.shape[0], cloud.shape[1] + 1))
+    tracker[:, :-1] = cloud
+
+    run_cond = True
+    while run_cond:
+        dep = np.where(tracker[:, -1] == 0)[0][0]
+        poi = tracker[dep, :-1]
+        tracker[dep][-1] = 1
+
+        dists = np.sqrt(
+            (tracker[:, 0] - poi[0]) ** 2
+            + (tracker[:, 1] - poi[1]) ** 2
+            + (tracker[:, 2] - poi[2]) ** 2
+        )
+
+        dists[dep] = 999  # weak
+        tracker = tracker[dists >= min_dist]
+
+        if np.array_equal(poi, tracker[-1, :-1]):
+            run_cond = False
+
+    rem_no = tracker.shape[0]
+    rem_cloud = np.float32(tracker[:, :-1])
+
+    return rem_cloud
+
+def min_dist_samp_np_old(cloud, raw_no, min_dist, trial_name, active_path):
     print('   ->space sampling')
     np_cloud = cloud
     # np_cloud = np.asarray(cloud)
