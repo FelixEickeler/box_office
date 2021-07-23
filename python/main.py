@@ -120,13 +120,17 @@ for sampled_cloud in upsampled:
 ##### ERROR CALCULATION: E2 PURE LABELING ERROR
 print('calculating E2: pure labeling error')
 E2 = []
+volume_full_cloud_boxes = []
 for depth in decomp_depth:
     i = 0
+    volume_full = 0
     for box in range(len(parent_cloud.bboxes[depth]['box_inliers'])):
         if i == 0:
             inliers = parent_cloud.bboxes[depth]['box_inliers'][box]
+            volume_full = parent_cloud.bboxes[depth]['box_object'][box].volume()
         else:
             inliers = np.concatenate((inliers, parent_cloud.bboxes[depth]['box_inliers'][box]))
+            volume_full = volume_full + parent_cloud.bboxes[depth]['box_object'][box].volume()
         i += 1
         inliers_unique = np.unique(inliers, axis=0)
 
@@ -135,10 +139,23 @@ for depth in decomp_depth:
             inliers_labeled[:, -1] = 1 # TODO lift limitation for multi class test
             error = 1 - accuracy_score(inliers_unique[:, -1], inliers_labeled[:, -1])
             error_log = (error, depth, box+1)
+            volume_log = (volume_full, depth)
             E2.append(error_log)
+            volume_full_cloud_boxes.append(volume_log)
+
+
+##### ERROR CALCULATION: E3 INTRODUCED LABELING ERROR
+print('calculating E3: introduced labeling error')
+E3 = []
+for down_cloud in downsampled:
+    for depth in decomp_depth:
+        volume_down = 0
+        for box in range(len(down_cloud.bboxes[depth]['box_object'])):
+            volume_down += down_cloud.bboxes[depth]['box_object'][box].volume()
+        diff = volume_down / volume_full_cloud_boxes[depth][0]
+        diff_log = (diff, down_cloud.sampling_type, down_cloud.sampling_parameter)
+        E3.append(diff_log)
 
 print('you are doing great')
 
-##### ERROR CALCULATION: E3 INTRODUCED LABELING ERROR
-print('calculating E2: pure labeling error')
-E2 = []
+
