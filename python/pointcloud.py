@@ -20,7 +20,8 @@ class Pointcloud:
         self.ID = None # can be 'full', 'down', or 'up'
         self.sampling_type = None
         self.sampling_parameter = None
-        self.bboxes = []
+        self.bboxes = None
+        self.history = None
 
     def load_from_txt(self, txt_cloud_path):
         load = np.float32(np.loadtxt(txt_cloud_path))
@@ -68,12 +69,20 @@ class Pointcloud:
             print('please use downsampled clouds for upsampling only')
         else:
             if method == 'near_one':
-                upsampled_cloud = near_one(self.xyzl, self.parent_cloud[:, :-1])
+                upsampled_cloud = near_one(self.xyzl, self.parent_cloud[:, :-1], sampling_parameter)
             elif method == 'near_k':
                 upsampled_cloud = near_k(self.xyzl, self.parent_cloud[:, :-1], sampling_parameter)
             else:
                 raise ValueError('method unknown, gtfo')
-            return upsampled_cloud
+            cloud = Pointcloud()
+            cloud.xyzl = upsampled_cloud
+            cloud.ID = 'up'
+            cloud.sampling_type = method
+            cloud.sampling_parameter = sampling_parameter
+            cloud.history = (self.sampling_type, self.sampling_parameter)
+            cloud.parent_cloud = self.parent_cloud
+
+            return cloud
 
     def get_bbox_inliers(self, class_src, class_of_interest, depth, gain, source_path):
         """
@@ -82,7 +91,7 @@ class Pointcloud:
         points_src = source_path + 'temporary_dump.txt'
         self.save_to_txt(points_src)
         with open(points_src, 'r') as original: data = original.read()
-        with open(points_src, 'w') as modified: modified.write("# 00306df8-b625-486b-b4cb-ffce06293ab7\n" + data)
+        with open(points_src, 'w') as modified: modified.write("# t0p53cr3t-h45h\n" + data) #TODO: remove this disgusting workaround
         boxes = boff.create_scene(points_src, class_src).get_object(class_of_interest).decompose(depth, gain)
         self.bboxes = boxes
         os.remove(points_src)

@@ -4,7 +4,7 @@ import open3d as o3d
 # from bbox import points_from_box
 
 
-def near_one(cloud_down_xyzl, cloud_full_xyz):
+def near_one(cloud_down_xyzl, cloud_full_xyz, dead_end):
 
     cloud_full_nulabels = np.zeros([cloud_full_xyz.shape[0], cloud_full_xyz.shape[1] + 1])
     cloud_full_nulabels[:, :-1] = cloud_full_xyz
