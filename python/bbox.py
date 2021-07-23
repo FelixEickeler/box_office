@@ -121,7 +121,7 @@ def points_from_box(cloud_xyzl, bbox):
 
     cloud = np.array(cloud_xyzl[:, :3], copy=True)
     # np.savetxt(data_path + '/active/' + trial_name + '/intermediate/cloud_IN.txt', cloud)
-    bbox = np.array(bbox[:, :3], copy=True)
+    # bbox = np.array(bbox[:, :3], copy=True)
     # np.savetxt(data_path + '/active/' + trial_name + '/intermediate/bbox_IN.txt', bbox)
 
     obbox_o3_vec = o3d.utility.Vector3dVector(bbox[:, 0:3])
@@ -163,8 +163,6 @@ def points_from_box(cloud_xyzl, bbox):
 
     # np.savetxt(data_path + '/active/' + trial_name + '/intermediate/bbox_0.txt', np.asarray(obbox_o3.get_box_points()))
     bbox_t = obbox_o3.translate(-T)
-    ### numpy o3d rotation workaround #1
-    # bbox_t = o3d_rotation_workaround_box(bbox_t, R)
     bbox_t = bbox_t.rotate(R, center=(0, 0, 0))
     # np.savetxt(data_path + '/active/' + trial_name + '/intermediate/bbox_AA.txt', np.asarray(bbox_t.get_box_points()))
 
@@ -172,8 +170,6 @@ def points_from_box(cloud_xyzl, bbox):
     cloud_t = o3d.geometry.PointCloud()
     cloud_t.points = o3_cloud.points
     cloud_t.translate(-T)
-    ### numpy o3d rotation workaround #2
-    # cloud_t = o3d_rotation_workaround_cloud(cloud_t, R)
     cloud_t = cloud_t.rotate(R, center=(0, 0, 0))
     # np.savetxt(data_path + '/active/' + trial_name + '/intermediate/cloud_AA.txt', np.asarray(cloud_t.points))
 

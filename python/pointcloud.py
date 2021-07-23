@@ -44,7 +44,7 @@ class Pointcloud:
         available methods: rand_samp, min_dist_samp
         """
         if self.ID != 'full':
-            print('please use full clouds for downsampling only')
+            raise ValueError('please use full clouds for downsampling only')
         else:
             if method == 'rand_samp':
                 processed_cloud = rand_samp(self.xyzl, sampling_parameter)
@@ -66,7 +66,7 @@ class Pointcloud:
         available methods: near_one, near_k
         """
         if self.ID != 'down':
-            print('please use downsampled clouds for upsampling only')
+            raise ValueError('please use downsampled clouds for upsampling only')
         else:
             if method == 'near_one':
                 upsampled_cloud = near_one(self.xyzl, self.parent_cloud[:, :-1], sampling_parameter)
@@ -92,19 +92,26 @@ class Pointcloud:
         self.save_to_txt(points_src)
         with open(points_src, 'r') as original: data = original.read()
         with open(points_src, 'w') as modified: modified.write("# t0p53cr3t-h45h\n" + data) #TODO: remove this disgusting workaround
+        # testing_2_random_sampling_0.2.txt:: # 00306df8-b625-486b-b4cb-ffce06293ab7
+        # bunny_classy_head.txt:: # t0p53cr3t-h45h
         boxes = boff.create_scene(points_src, class_src).get_object(class_of_interest).decompose(depth, gain)
         self.bboxes = boxes
         os.remove(points_src)
 
         inlier_points = []
         fpr_0s = []
+        box_entities = []
+        box_vertices = []
 
         for box in boxes:
-            box_vertices = box.bounding_box.get_vertices()
-            [box_inliers, fpr_0] = points_from_box(self.xyzl, box_vertices)
+            box_e = box.bounding_box
+            box_v = box.bounding_box.get_vertices()
+            box_entities.append(box_e)
+            box_vertices.append(box_v)
+            [box_inliers, fpr_0] = points_from_box(self.xyzl, box_v)
             inlier_points.append(box_inliers)
             fpr_0s.append(fpr_0)
 
             # box_inliers = points_from_box(self.xyz, box_vertices)
 
-        return box_vertices, inlier_points
+        return box_vertices, inlier_points, box_entities
