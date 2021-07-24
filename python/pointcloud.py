@@ -99,7 +99,6 @@ class Pointcloud:
         os.remove(points_src)
 
         inlier_points = []
-        fpr_0s = []
         box_entities = []
         box_vertices = []
 
@@ -108,9 +107,8 @@ class Pointcloud:
             box_v = box.bounding_box.get_vertices()
             box_entities.append(box_e)
             box_vertices.append(box_v)
-            [box_inliers, fpr_0] = points_from_box(self.xyzl, box_v)
+            [box_inliers, inlier_indices] = points_from_box(self.xyzl, box_v)
             inlier_points.append(box_inliers)
-            fpr_0s.append(fpr_0)
 
             # box_inliers = points_from_box(self.xyz, box_vertices)
 

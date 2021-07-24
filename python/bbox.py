@@ -190,7 +190,7 @@ def points_from_box(cloud_xyzl, bbox):
 
     fpr_0 = 1 - accuracy_score(inlier_labels_src, inlier_labels_box)
 
-    return inlier_cloud, fpr_0
+    return inlier_cloud, inliers
 
 # trial_name = 'testing_2'
 #

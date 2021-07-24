@@ -1,9 +1,10 @@
-import BoxOffice as bof
 import numpy as np
-
-from pointcloud import Pointcloud
 from sklearn.metrics import accuracy_score
+import itertools
 
+import BoxOffice as bof
+from pointcloud import Pointcloud
+from bbox import points_from_box
 
 print('Welcome to the Box Office!')
 # '../data/in/bunny_classy_head.txt' # // '../data/in/bunny_classy_head.ol' #
@@ -156,6 +157,28 @@ for down_cloud in downsampled:
         diff_log = (diff, down_cloud.sampling_type, down_cloud.sampling_parameter)
         E3.append(diff_log)
 
-print('you are doing very great')
+##### ERROR CALCULATION: E4 INTRODUCED SAMPLING ERROR
+print('calculating E4: introduced sampling error')
+E4 = []
+
+for down_cloud in downsampled:
+    for up_cloud in upsampled:
+        for depth in decomp_depth:
+            inlier_indices = []
+            for i, box in enumerate(down_cloud.bboxes[depth]['box_object']):
+                [inliers, inlier_index] = points_from_box(up_cloud.xyzl, box.get_vertices())
+                inlier_indices.append(inlier_index)
+            inlier_indices = list(itertools.chain.from_iterable(inlier_indices))
+            labeled_up = np.array(up_cloud.xyzl, copy=True)
+            labeled_up[inlier_indices, -1] = 1
+
+            error = accuracy_score(parent_cloud.xyzl[:, -1], labeled_up[:, -1])
+            now = (up_cloud.sampling_type, up_cloud.sampling_parameter)
+            error_log = (error, now, up_cloud.history, depth)
+
+            E4.append(error_log)
+
+
+print('you are doing great')
 
 
