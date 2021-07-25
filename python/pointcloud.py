@@ -20,6 +20,7 @@ class Pointcloud:
         self.ID = None # can be 'full', 'down', or 'up'
         self.sampling_type = None
         self.sampling_parameter = None
+        self.down_rate_v = None
         self.bboxes = None
         self.history = None
 
@@ -58,6 +59,7 @@ class Pointcloud:
             cloud.parent_cloud = self.xyzl
             cloud.sampling_type = method
             cloud.sampling_parameter = sampling_parameter
+            cloud.down_rate_v = round(cloud.xyzl.shape[0] / self.xyzl.shape[0], 4)
 
             return cloud
 
@@ -79,7 +81,7 @@ class Pointcloud:
             cloud.ID = 'up'
             cloud.sampling_type = method
             cloud.sampling_parameter = sampling_parameter
-            cloud.history = (self.sampling_type, self.sampling_parameter)
+            cloud.history = (self.sampling_type, self.sampling_parameter, self.down_rate_v)
             cloud.parent_cloud = self.parent_cloud
 
             return cloud
