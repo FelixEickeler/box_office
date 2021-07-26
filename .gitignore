@@ -7,3 +7,6 @@ modules/wrapper_cgal
 .idea
 __pychache__
 modules
+_build
+build
+pybin_bin

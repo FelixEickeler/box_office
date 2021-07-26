@@ -33,12 +33,8 @@ Do not forget to shutdown the docker after use with docker-compose down
 
 ## TODOS:
 * write tests (c++) 
-    * typdef tests
-    * data loading 
-    * isolated parts of the mvbb
-    * maybe even integration
+    * improve data loading 
     
-* write interface definitions to python
 * make example in pyhton 
 * loader and dataprocessing tests in python ?!?
 
