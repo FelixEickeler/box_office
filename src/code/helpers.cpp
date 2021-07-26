@@ -18,16 +18,16 @@
 bool helpers::xyzc_compare(const XYZC &p1, const XYZC &p2) {
     // sort by class
     if (std::get<1>(p1) < std::get<1>(p2)) return true;
-    else if (std::get<1>(p1) < std::get<1>(p2)) return false;
+    else if (std::get<1>(p1) > std::get<1>(p2)) return false;
 
-    if(std::get<0>(p1).x() > std::get<0>(p2).x()) return true;
-    else if (std::get<0>(p1).x() < std::get<0>(p2).x()) return false;
+    if(std::get<0>(p1).x() < std::get<0>(p2).x()) return true;
+    else if (std::get<0>(p1).x() > std::get<0>(p2).x()) return false;
 
-    if(std::get<0>(p1).y() > std::get<0>(p2).y()) return true;
-    else if (std::get<0>(p1).y() < std::get<0>(p2).y()) return false;
+    if(std::get<0>(p1).y() < std::get<0>(p2).y()) return true;
+    else if (std::get<0>(p1).y() > std::get<0>(p2).y()) return false;
 
-    if(std::get<0>(p1).z() > std::get<0>(p2).z()) return true;
-    else if (std::get<0>(p1).z() < std::get<0>(p2).z()) return false;
+    if(std::get<0>(p1).z() < std::get<0>(p2).z()) return true;
+    else if (std::get<0>(p1).z() > std::get<0>(p2).z()) return false;
 
     return false;
 }

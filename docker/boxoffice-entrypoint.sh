@@ -11,5 +11,4 @@ groupmod -g $GROUP_ID boxy
 export HOME=/home/boxy
 id boxy
 exec /usr/sbin/gosu boxy /bin/bash
-sudo service ssh start
 echo "Done with startup"
