@@ -39,6 +39,7 @@ class MvbbEvaluator{
         std::string get_objectlist_path() const;
         bool load_points();
         bool load_objects();
+        bool populate(pointcloud_xyzc pcs, std::unordered_map<int, std::string> obj_name_map);
 
         boxy::BBox bounding_box() const;
         boxy::pointcloud_xyzc& get_pointcloud();

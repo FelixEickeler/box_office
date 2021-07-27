@@ -30,3 +30,7 @@ uint32_t BoxEntity::get_id() const {
 pointcloud_xyzc BoxEntity::get_points() const {
     return points;
 }
+
+std::string BoxEntity::get_name() const {
+    return name;
+}

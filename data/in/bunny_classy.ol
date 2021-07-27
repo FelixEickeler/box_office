@@ -1,3 +1,5 @@
-# OFF
-0 bunny_ears_1
-1 bunny_body_1
+0 body_1
+1 tail_1
+2 head_1
+3 ear_1
+4 ear_2

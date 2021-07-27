@@ -60,6 +60,22 @@ std::vector<Point> helpers::numpy_2_points(py::array_t<float> numpy83) {
     return tmp;
 }
 
+
+pointcloud_xyzc helpers::numpy_2_xyzc(py::array_t<float> nx4) {
+    py::buffer_info buf1 = nx4.request();
+    auto *ptr1 = (float *) buf1.ptr;
+    size_t rows = buf1.shape[0];
+    size_t cols = buf1.shape[1];
+    if(cols != 4){
+        throw std::runtime_error("This numpy array must be Nx4; 3 for each vertex  x,y,z and one for the class!");
+    }
+
+    pointcloud_xyzc tmp;
+    for (size_t idx = 0; idx < rows; idx++)
+        tmp.emplace_back(std::make_tuple(Point(ptr1[idx*cols + 0], ptr1[idx*cols + 1], ptr1[idx*cols + 2]),  ptr1[idx*cols + 3]));
+    return tmp;
+}
+
 Point helpers::numpy31_2_point(py::array_t<float> numpy31) {
     py::buffer_info buf1 = numpy31.request();
     auto *ptr1 = (float *) buf1.ptr;

@@ -18,4 +18,4 @@ services:
         - LOCAL_UID=${UUID}
         - LOCAL_GID=${GID}
     entrypoint: /usr/local/bin/boxoffice-entrypoint.sh
-    command: bash -c 'sudo service ssh start'
+    command: /usr/local/bin/init.sh

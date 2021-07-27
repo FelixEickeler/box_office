@@ -70,14 +70,16 @@ RUN git clone git://github.com/ethz-asl/libpointmatcher.git \
   && make install
 
 
-RUN pip3 install numpy scikit-learn scipy
-RUN pip3 install --user --pre https://storage.googleapis.com/open3d-releases-master/python-wheels/open3d-0.13.0+e4f2557-cp39-cp39-linux_x86_64.whl
+RUN pip3 install numpy scikit-learn scipy #open3d
+RUN pip install --pre https://storage.googleapis.com/open3d-releases-master/python-wheels/open3d-0.13.0+7c62640-cp39-cp39-manylinux_2_27_x86_64.whl
+
 
 # create user, ids are temporary
 ARG USER_ID=1000
 RUN useradd -m --no-log-init boxy && yes brucelee | passwd boxy
 RUN usermod -aG sudo boxy
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+RUN chown -R boxy:boxy /home/boxy
 
 
 # WORKDIR /home/boxy/
@@ -87,5 +89,8 @@ RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 # Add helios-entrypoint, for user-managment (gosu e.t.c)
 COPY boxoffice-entrypoint.sh /usr/local/bin/boxoffice-entrypoint.sh
+COPY init.sh /usr/local/bin/init.sh
 RUN chmod +x /usr/local/bin/boxoffice-entrypoint.sh
+RUN chmod +x /usr/local/bin/init.sh
+CMD ["/usr/local/bin/init.sh"]
 ENTRYPOINT ["/usr/local/bin/boxoffice-entrypoint.sh"]

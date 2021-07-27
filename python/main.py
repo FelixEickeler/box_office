@@ -5,178 +5,171 @@ import itertools
 import BoxOffice as bof
 from pointcloud import Pointcloud
 from bbox import points_from_box
+from pathlib import Path
+from evaluation import calculate_PSE
+# from exceptions import NotImplementedError
+import csv
 
 print('Welcome to the Box Office!')
 # '../data/in/bunny_classy_head.txt' # // '../data/in/bunny_classy_head.ol' #
-point_src = '../data/in/bunny_classy_head.txt' #"../data/in/down__testing_2_random_sampling_0.2.txt"  #'../data/in/bunny_classy.off'
-class_src = '../data/in/bunny_classy_head.ol' #"../data/in/down__testing_2.ol"  #'../data/in/bunny_classy.ol' #
+point_src = '../data/in/bunny_classy.txt'  # "../data/in/down__testing_2_random_sampling_0.2.txt"  #'../data/in/bunny_classy.off'
+class_src = '../data/in/bunny_classy.ol'  # "../data/in/down__testing_2.ol"  #'../data/in/bunny_classy.ol' #
 
-parent_cloud = Pointcloud()
-parent_cloud.load_from_txt(point_src)
+
+# TODO Make static
+
 # cloudy.save_to_txt('/home/boxy/BoxOffice/data/active/testing_2/intermediate/yo.txt')
 
+def load_or_save_boxes(node_list, base_path, name):
+    cnt = 0
+    for node in node_list:
+        cnt += 1
+        bbox_path = base_path / "{}_{}.txt".format(name, cnt)
+        bbox_path.parent.mkdir(parents=True, exist_ok=True)
+        np.savetxt(bbox_path, node.bounding_box.get_vertices(), fmt="%1.8f")
 
 
-###############
-# SAMPLE DOWN #
-###############
+# Felix added this:
 
-# random sampling:
-down_method = 'rand_samp'
-rand_ratio = [0.1, 0.2]#, 0.4, 0.6, 0.8]
-scenario_down = []
-for ratio in rand_ratio:
-    combo = (down_method, ratio)
-    scenario_down.append(combo)
+gain = 0.99
+max_kappa = 4
+no_cache = False
+out_path = Path("../data/out")
+calculate_pure_sampling_error = True
+calculate_pure_labelling_error = True
+calculate_introduced_labelling_error = True
+calculate_introduced_sampling_error = True
 
-# distance sampling:
-down_method = 'min_dist_samp'
-min_dist = [0.0137, 0.0194]#, 0.02, 0.03, 0.04, 0.05]
-for dist in min_dist:
-    combo = (down_method, dist)
-    scenario_down.append(combo)
+if __name__ == "__main__":
+    down_scenarios = [["rand_samp", ratio] for ratio in [0.1, 0.2]]
+    down_scenarios += [["min_dist_samp", ratio] for ratio in [0.0137, 0.0194]]
+    up_scenarios = [["near_one", ratio] for ratio in [1]]
+    up_scenarios += [["near_k", ratio] for ratio in [5]]
 
-downsampled = []
+    scene = bof.create_scene(point_src, class_src)
+    down_store = {}
+    up_store = {}
+    scene_store = {}
+    PSE = []
+    PLE = []
+    ILE = []
+    ISE = []
 
-for scenario in scenario_down:
-    downsampled.append(parent_cloud.sample_down(scenario[0], scenario[1]))
-    print('downsampling scenario: ', scenario[0], ':', scenario[1])
-
-
-
-#############
-# SAMPLE UP #
-#############
-
-# nearest one:
-scenario_up = [('near_one', 1)]
-
-# nearest k:
-k = [5]
-for k_ in k:
-    combo = ('near_k', k_)
-    scenario_up.append(combo)
-
-upsampled = []
-
-for scenario in scenario_up:
-    for down_cloud in downsampled:
-        print('upsampling scenario: ', scenario[0], ':', scenario[1], 'on', down_cloud.sampling_type, ':', down_cloud.sampling_parameter)
-        upsampled.append(down_cloud.sample_up(scenario[0], scenario[1]))
-
-
-####################
-# LABEL BY BOXXING #
-####################
-
-class_of_interest = 1
-decomp_depth = [0, 1, 2, 3]
-gain_thresh = 0.99
-
-oh_my_path = "../data/active/testing_2/intermediate/bbox_dump_temp/" # belongs to the most digusting of fixes
-
-list_all = downsampled
-list_all.append(parent_cloud)
-
-for cloud_tbl in list_all:
-    print('full:', cloud_tbl.isOriginal, 'downsampling:', cloud_tbl.sampling_type, cloud_tbl.sampling_parameter)
-    box_dict = dict.fromkeys(decomp_depth)
-    for depth in decomp_depth:
-        print(':::depth ', depth)
-
-        # box_vertices = []
-        # box_inliers = []
-        # box_object = []
-
-        [vertices, inliers, box_obj] = cloud_tbl.get_bbox_inliers(class_src, class_of_interest, depth, gain_thresh, oh_my_path)
-
-        # box_vertices.append(vertices)
-        # box_inliers.append(inliers)
-        box_dict[depth] = {
-            'box_vertices': vertices,
-            'box_inliers': inliers,
-            'box_object': box_obj
-        }
-
-        cloud_tbl.bboxes = box_dict
-
-parent_cloud = list_all[-1]
-downsampled = list_all[:-1]
-
-
-##### ERROR CALCULATION: E1 PURE SAMPLING ERROR
-print('calculating E1: pure sampling error')
-E1_PSE = []
-for sampled_cloud in upsampled:
-    error = 1 - accuracy_score(sampled_cloud.parent_cloud[:, -1], sampled_cloud.xyzl[:, -1])
-    now = (sampled_cloud.sampling_type, sampled_cloud.sampling_parameter)
-    error_log = (error, now, sampled_cloud.history)
-    E1_PSE.append(error_log)
-
-
-##### ERROR CALCULATION: E2 PURE LABELING ERROR
-print('calculating E2: pure labeling error')
-E2_PLE = []
-volume_full_cloud_boxes = []
-for depth in decomp_depth:
-    i = 0
-    volume_full = 0
-    for box in range(len(parent_cloud.bboxes[depth]['box_inliers'])):
-        if i == 0:
-            inliers = parent_cloud.bboxes[depth]['box_inliers'][box]
-            volume_full = parent_cloud.bboxes[depth]['box_object'][box].volume()
+    # down-sample because passive parameter
+    # original_full = Pointcloud(scene.get_points())
+    original_pcs = Pointcloud(scene.get_points())
+    for dmethod, dparam in down_scenarios:
+        dkey = "{}-{}".format(dmethod, dparam)
+        tmp_path = out_path / (dkey + ".txt")
+        if no_cache or not tmp_path.exists():
+            down_store[dkey] = original_pcs.sample_down(dmethod, dparam)
+            print('downsampling scenario: ', dmethod, ':', dparam)
+            down_store[dkey].save_to_txt(tmp_path)
         else:
-            inliers = np.concatenate((inliers, parent_cloud.bboxes[depth]['box_inliers'][box]))
-            volume_full = volume_full + parent_cloud.bboxes[depth]['box_object'][box].volume()
-        i += 1
-        inliers_unique = np.unique(inliers, axis=0)
+            tmp = Pointcloud()
+            tmp.load_from_txt(tmp_path)
+            down_store[dkey] = tmp
+        down_store[dkey].parent_cloud = original_pcs
+        down_store[dkey].ID = "down"
+        scene_store[dkey] = bof.create_scene(tmp_path.__str__(), class_src.__str__())
 
-        if box == len(parent_cloud.bboxes[depth]['box_inliers'])-1:
-            inliers_labeled = np.array(inliers_unique, copy=True)
-            inliers_labeled[:, -1] = 1 # TODO lift limitation for multi class test
-            error = 1 - accuracy_score(inliers_unique[:, -1], inliers_labeled[:, -1])
-            error_log = (error, depth, box+1)
-            volume_log = (volume_full, depth)
-            E2_PLE.append(error_log)
-            volume_full_cloud_boxes.append(volume_log)
+        for umethod, uparam in up_scenarios:
+            ukey = dkey + "={}-{}".format(umethod, uparam)
+            up_store[ukey] = down_store[dkey].sample_up(umethod, uparam)
+            up_path = out_path / (ukey + ".txt")
+            up_store[ukey].save_to_txt(up_path)
 
+            # CALCULATE PSE
+            pse_error = 1 - accuracy_score(original_pcs.xyzl[:, -1], up_store[ukey].xyzl[:, -1])
+            PSE.append({"pse": pse_error, "down-sampling": dmethod, "down-param": dparam, "up-sampling": umethod, "up-param": uparam, "path": up_path, "ukey": ukey})
 
-##### ERROR CALCULATION: E3 INTRODUCED LABELING ERROR
-print('calculating E3: introduced labeling error')
-E3_ILE = []
-for down_cloud in downsampled:
-    for depth in decomp_depth:
-        volume_down = 0
-        for box in range(len(down_cloud.bboxes[depth]['box_object'])):
-            volume_down += down_cloud.bboxes[depth]['box_object'][box].volume()
-        diff = volume_down / volume_full_cloud_boxes[depth][0]
-        diff_log = (diff, down_cloud.sampling_type, down_cloud.sampling_parameter, depth)
-        E3_ILE.append(diff_log)
+    # TODO write PSE
 
+    scene_list = scene.list_objects()
+    for o_id, o in scene_list.items():
+        obj_base_path = Path(out_path / o.get_name())
+        obj_truth = Pointcloud(o.get_points())
 
-##### ERROR CALCULATION: E4 INTRODUCED SAMPLING ERROR
-print('calculating E4: introduced sampling error')
-E4_ISE = []
+        for kappa in range(max_kappa):
+            dec_base_path = obj_base_path / "bboxes" / "{}_{}".format(kappa, gain)
+            dec_base_path.parent.mkdir(parents=True, exist_ok=True)
+            orig_boxes = o.decompose(kappa)
+            load_or_save_boxes(orig_boxes, dec_base_path, "original")
 
-for down_cloud in downsampled:
-    for up_cloud in upsampled:
-        depth = 3
-        # for depth in decomp_depth:
-        inlier_indices = []
-        for i, box in enumerate(down_cloud.bboxes[depth]['box_object']):
-            [inliers, inlier_index] = points_from_box(up_cloud.xyzl, box.get_vertices())
-            inlier_indices.append(inlier_index)
-        inlier_indices = list(itertools.chain.from_iterable(inlier_indices))
-        labeled_up = np.array(up_cloud.xyzl, copy=True)
-        labeled_up[inlier_indices, -1] = 1
+            # CALCULATE PLE
+            wrong_cls_in_obj = 0
+            print("############### \t" + o.get_name() + "\t" + str(kappa))
+            for node in orig_boxes:
+                [inlier_points, _] = points_from_box(original_pcs.xyzl, node.bounding_box.get_vertices())
+                ann_points = np.copy(inlier_points)
+                ann_points[:, -1] = o.get_id()
+                wrong_cls_in_obj += ann_points.shape[0] - accuracy_score(inlier_points[:, -1], ann_points[:, -1], normalize=False)
+            PLE.append({"kappa": kappa, "gain": gain, "obj_name": o.get_name(), "id": o.get_id(), "ple": wrong_cls_in_obj / len(o.get_points())})
 
-        error = accuracy_score(parent_cloud.xyzl[:, -1], labeled_up[:, -1])
-        now = (up_cloud.sampling_type, up_cloud.sampling_parameter)
-        error_log = (error, now, up_cloud.history, depth)
+            # CALCULATE ILE
+            V_orignal = sum([node.bounding_box.volume() for node in orig_boxes])
+            for dkey, prediction_scene in scene_store.items():
+                obj_pred = prediction_scene.get_object(o.get_id())
+                pred_boxes = obj_pred.decompose(kappa, gain)
+                load_or_save_boxes(pred_boxes, dec_base_path, dkey)
+                V_boxes = sum([node.bounding_box.volume() for node in pred_boxes])
+                ile_error = abs(V_boxes - V_orignal) / V_orignal
+                [dmethod, dparam] = dkey.split("-")
+                ILE.append({"kappa": kappa, "gain": gain, "obj_name": o.get_name(), "id": o.get_id(), "ile": ile_error, "down-sampling": dmethod, "param": dparam})
 
-        E4_ISE.append(error_log)
+                # CALCULATE ISE
+                for ref_nodes in orig_boxes:
+                    [_, indices] = points_from_box(down_store[dkey].xyzl, ref_nodes.bounding_box.get_vertices())
+                    eval_point_cloud_xyzl = np.copy(down_store[dkey].xyzl)
+                    eval_point_cloud_xyzl[indices][:, -1] = o.get_id()
+                    eval_point_cloud = Pointcloud(eval_point_cloud_xyzl)
+                    eval_point_cloud.ID = "down"
+                    eval_point_cloud.parent_cloud = original_pcs
 
+                    for umethod, uparam in up_scenarios:
+                        ukey = dkey + "={}-{}".format(umethod, uparam)
+                        now = eval_point_cloud.sample_up(umethod, uparam)
+                        before = up_store[ukey]
+                        diff = now.xyzl[now.xyzl[:, -1] != before.xyzl[:, -1]]
+                        if diff.size > 0:
+                            [_, diff_inside_indices] = points_from_box(diff, ref_nodes.bounding_box.get_vertices())
+                            additional = (diff[~diff_inside_indices]).shape[0]
+                        else:
+                            additional = 0
 
-print('you are doing great')
+                        [ref_inside, _] = points_from_box(original_pcs.xyzl, ref_nodes.bounding_box.get_vertices())
+                        [now_inside, _] = points_from_box(now.xyzl, ref_nodes.bounding_box.get_vertices())
+                        base = np.where(ref_inside[:, -1] != now_inside[:, -1])[0]
+                        ise_count = base.shape[0] + additional
 
+                        ISE.append({"kappa": kappa, "gain": gain, "obj_name": o.get_name(), "id": o.get_id(), "ise": ise_count / ref_inside.size, "down-sampling": dmethod,
+                                    "down-param": dparam, "up-sampling": umethod, "up-param": uparam})
 
+    with open(out_path / 'bunny_pse.csv', mode='w') as csv_file:
+        fieldnames = ["down-sampling", "down-param", "up-sampling", "up-param", "pse", "path", "ukey"]
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in PSE:
+            writer.writerow(row)
+
+    with open(out_path / 'bunny_ple.csv', mode='w') as csv_file:
+        fieldnames = ["kappa", "gain", "obj_name", "id", "ple"]
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in PLE:
+            writer.writerow(row)
+
+    with open(out_path / 'bunny_ile.csv', mode='w') as csv_file:
+        fieldnames = ["kappa", "gain", "obj_name", "id", "down-sampling", "param", "ile"]
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in ILE:
+            writer.writerow(row)
+
+    with open(out_path / 'bunny_ise.csv', mode='w') as csv_file:
+        fieldnames = ["kappa", "gain", "obj_name", "id", "ise", "down-sampling", "down-param", "up-sampling", "up-param"]
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in ISE:
+            writer.writerow(row)
+    print('you are doing great')

@@ -3,14 +3,14 @@ set(CMAKE_CXX_STANDARD 17)
 project(BoxOffice)
 set(BINARY ${CMAKE_PROJECT_NAME})
 
-message(..)
+message("Current Directory:" ${PROJECT_SOURCE_DIR})
 #set(CMAKE_CXX_FLAGS_DEBUG "-g -O2")
 set(CMAKE_BUILD_TYPE "Release")
 
 add_compile_definitions (CGAL_DISABLE_ROUNDING_MATH_CHECK=ON)
 # Setup foreign projects
 # pybind11 + Python Target
-add_subdirectory(../modules/pybind11 ../pybin_bin EXCLUDE_FROM_ALL)
+add_subdirectory(../modules/pybind11 $(CMAKE_BINARY_DIR)/pybind_bin EXCLUDE_FROM_ALL)
 
 # CGal
 set(CGAL_EIGEN3_ENABLED TRUE)

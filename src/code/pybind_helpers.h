@@ -30,5 +30,7 @@ namespace  helpers {
     std::vector<Point> numpy_2_points(py::array_t<float> numpy31);
 
     Point numpy31_2_point(py::array_t<float> numpy31);
+
+    pointcloud_xyzc numpy_2_xyzc(py::array_t<float> nx4);
 }
 #endif //BOXOFFICE_PYBIND_HELPERS_H

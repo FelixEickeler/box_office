@@ -28,6 +28,8 @@ class BoxEntity {
 
         [[nodiscard]] uint32_t get_id() const;
 
+        [[nodiscard]] std::string get_name() const;
+
         [[nodiscard]] pointcloud_xyzc get_points() const;
 };
 

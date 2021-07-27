@@ -11,6 +11,7 @@
 #include <iostream>
 #include <map>
 #include <unordered_map>
+#include <utility>
 
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/bounding_box.h>
@@ -47,52 +48,48 @@ std::string MvbbEvaluator::get_objectlist_path() const{
 bool MvbbEvaluator::load_points() {
     auto points_from_file = helpers::read_file<4>(_pointcloud_src);
 //    _pointcloud.reserve(points_from_file.size());
-    if(points_from_file[0][0] == "#") {
-        if (hash_key.length() > 0) {
-            if (hash_key != points_from_file[0][1]) {
-                std::cout << "File missmatch : pointcloud not working for this object_list" << "\n";
-                return false;
-            }
-        } else {
-            hash_key = points_from_file[0][1];
-        }
-        std::cout << "Loading Points from"  << _pointcloud_src << "\n";
-        std::for_each(points_from_file.cbegin() + 1, points_from_file.cend(), [this](auto const &obj) {
-            auto p = Point(std::stof(obj[0]), std::stof(obj[1]), std::stof(obj[2]));
-            auto i = std::stoi(obj[3]);
-            _pointcloud.emplace_back(std::forward_as_tuple(p,i));
-        });
-        // sort everything by dimension type => x => y => z
-        std::sort( _pointcloud.begin(), _pointcloud.end(), helpers::xyzc_compare);
-        std::cout << _pointcloud.size() << " Points have been added to this scene\n";
-        return true;
-    }
-    return false;
+//    if(points_from_file[0][0] == "#") {
+//        if (hash_key.length() > 0) {
+//            if (hash_key != points_from_file[0][1]) {
+//                std::cout << "File missmatch : pointcloud not working for this object_list" << "\n";
+//                return false;
+//            }
+//        } else {
+//            hash_key = points_from_file[0][1];
+//        }
+    std::cout << "Loading Points from"  << _pointcloud_src << "\n";
+    std::for_each(points_from_file.cbegin(), points_from_file.cend(), [this](auto const &obj) {
+        auto p = Point(std::stof(obj[0]), std::stof(obj[1]), std::stof(obj[2]));
+        auto i = std::stoi(obj[3]);
+        _pointcloud.emplace_back(std::forward_as_tuple(p,i));
+    });
+    // sort everything by dimension type => x => y => z
+    std::sort( _pointcloud.begin(), _pointcloud.end(), helpers::xyzc_compare);
+    std::cout << _pointcloud.size() << " Points have been added to this scene\n";
+    return true;
 }
 
 bool MvbbEvaluator::load_objects() {
     auto objects = helpers::read_file<2>(_objectlist_src);
     _objectlist.reserve(objects.size());
-    if(objects[0][0] == "#") {
-        if(hash_key.length() > 0){
-            if(hash_key != objects[0][1]) {
-                std::cout << "File missmatch : objectlist not working for this pointcloud" << "\n";
-                return false;
-            }
-        }
-        else {
-            hash_key = objects[0][1];
-        }
-        for(auto const &obj : helpers::range(objects.begin()+1, objects.end())){
-            int id = std::stoi(obj[0]);
-            auto obj_name = obj[1];
-            boxy::pointcloud_xyzc tmp = this->copy_object_points(id);
-            auto box_entity = BoxEntity(static_cast<int>(id), obj_name, tmp);
-            _objectlist.insert_or_assign(id, box_entity);
-        };
-        return true;
-    }
-    return false;
+//    if(objects[0][0] == "#") {
+//        if(hash_key.length() > 0){
+//            if(hash_key != objects[0][1]) {
+//                std::cout << "File missmatch : objectlist not working for this pointcloud" << "\n";
+//                //return false;
+//            }
+//        }
+//        else {
+//            hash_key = objects[0][1];
+//        }
+    for(auto const &obj : helpers::range(objects.begin(), objects.end())){
+        int id = std::stoi(obj[0]);
+        auto obj_name = obj[1];
+        boxy::pointcloud_xyzc tmp = this->copy_object_points(id);
+        auto box_entity = BoxEntity(static_cast<int>(id), obj_name, tmp);
+        _objectlist.insert_or_assign(id, box_entity);
+    };
+    return true;
 }
 
 boxy::pointcloud_xyzc& MvbbEvaluator::get_pointcloud(){
@@ -129,6 +126,18 @@ boxy::BBox MvbbEvaluator::bounding_box() const { //pointcloud_xyzc input
     std::cout << "Elapsed time: " << elapsed.count() << " s\n";
     boxy::BBox bbox(obb_points);
     return bbox;
+}
+
+bool MvbbEvaluator::populate(pointcloud_xyzc pcs, std::unordered_map<int, std::string> obj_name_map) {
+    _pointcloud = std::move(pcs);
+    for (auto const &obj : obj_name_map) {
+        int id = obj.first;
+        auto obj_name = obj.second;
+        boxy::pointcloud_xyzc tmp = this->copy_object_points(id);
+        auto box_entity = BoxEntity(id, obj_name, tmp);
+        _objectlist.insert_or_assign(id, box_entity);
+    };
+    return true;
 }
 
 MvbbEvaluator create_mvbbevaluator(const std::string &point_src, const std::string &class_src) {

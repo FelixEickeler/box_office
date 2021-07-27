@@ -4,20 +4,21 @@ import os
 from down import rand_samp, min_dist_samp
 from up import near_one, near_k
 from bbox import points_from_box
+from pathlib import Path
 
 import BoxOffice as boff
 
 
 class Pointcloud:
-    def __init__(self):
+    def __init__(self, pcs=None):
         self.isOriginal = False
-        self.xyz = np.zeros(1)
-        self.xyzl = np.zeros(1)
-        self.has_labels = False
+        self.xyz = np.zeros(1) if pcs is None else pcs[:, :3]
+        self.xyzl = np.zeros(1) if pcs is None else pcs[:, :4]
+        self.has_labels = False if pcs is None else True
         self.data_path = 'not loaded from path'
         self.trial = 'undefined'
         self.parent_cloud = None
-        self.ID = None # can be 'full', 'down', or 'up'
+        self.ID = None if pcs is None else "full" # can be 'full', 'down', or 'up'
         self.sampling_type = None
         self.sampling_parameter = None
         self.down_rate_v = None
@@ -25,6 +26,8 @@ class Pointcloud:
         self.history = None
 
     def load_from_txt(self, txt_cloud_path):
+        import os
+        print(os.getcwd())
         load = np.float32(np.loadtxt(txt_cloud_path))
         self.xyz = load[:, :3]
         if load.shape[1] > 3:
@@ -38,6 +41,8 @@ class Pointcloud:
 
     def save_to_txt(self, path_to_save):
         # to_file_txt = active_path + '/' + 'down__' + trial_name + '_mind_dist_sampling_' + str(min_dist) + '.txt'
+        save_path = Path(path_to_save)
+        save_path.parent.mkdir(parents=True, exist_ok=True)
         np.savetxt(path_to_save, self.xyzl, fmt="%1.8f")
 
     def sample_down(self, method, sampling_parameter):
@@ -71,9 +76,9 @@ class Pointcloud:
             raise ValueError('please use downsampled clouds for upsampling only')
         else:
             if method == 'near_one':
-                upsampled_cloud = near_one(self.xyzl, self.parent_cloud[:, :-1], sampling_parameter)
+                upsampled_cloud = near_one(self.xyzl, self.parent_cloud.xyz, sampling_parameter)
             elif method == 'near_k':
-                upsampled_cloud = near_k(self.xyzl, self.parent_cloud[:, :-1], sampling_parameter)
+                upsampled_cloud = near_k(self.xyzl, self.parent_cloud.xyz, sampling_parameter)
             else:
                 raise ValueError('method unknown, gtfo')
             cloud = Pointcloud()
@@ -99,11 +104,14 @@ class Pointcloud:
         boxes = boff.create_scene(points_src, class_src).get_object(class_of_interest).decompose(depth, gain)
         self.bboxes = boxes
         os.remove(points_src)
+        [box_vertices, inlier_points, box_entities] = _get_bbox_inliers(boxes)
 
+        return box_vertices, inlier_points, box_entities
+
+    def _get_bbox_inliers(self, bboxes):
         inlier_points = []
         box_entities = []
         box_vertices = []
-
         for box in boxes:
             box_e = box.bounding_box
             box_v = box.bounding_box.get_vertices()
@@ -112,6 +120,5 @@ class Pointcloud:
             [box_inliers, inlier_indices] = points_from_box(self.xyzl, box_v)
             inlier_points.append(box_inliers)
 
-            # box_inliers = points_from_box(self.xyz, box_vertices)
-
         return box_vertices, inlier_points, box_entities
+            # box_inliers = points_from_box(self.xyz, box_vertices)

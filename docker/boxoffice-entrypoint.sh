@@ -5,6 +5,8 @@ GROUP_ID=${LOCAL_GID:-9001}
 
 #echo "updated"
 #cut -d: -f1 /etc/group | sort
+echo "STarting SSH"
+service ssh restart
 echo "Starting__ with UID: $USER_ID, GID: $GROUP_ID"
 usermod -u $USER_ID boxy
 groupmod -g $GROUP_ID boxy
