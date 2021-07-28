@@ -1,11 +1,9 @@
-#include "code/Evaluator.h"
+#include "code/BoxScene.h"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
-//#include <pybind11/pickle.h>
 #include "code/mvbb_algorithms.h"
 #include "code/pybind_helpers.h"
-#include "code/FitAndSplitHierarchy.h"
 namespace py = pybind11;
 
 BBox create_from_list(py::array_t<float> numpy83){
@@ -18,10 +16,10 @@ BBox create_from_list(py::array_t<float> numpy83){
     return BBox(vertices);
 }
 
-MvbbEvaluator create_scene_from_2numpy(py::array_t<float> nx4, std::unordered_map<int, std::string> object_name_map){
+BoxScene create_scene_from_2numpy(py::array_t<float> nx4, std::unordered_map<int, std::string> object_name_map){
     auto pointcloud = helpers::numpy_2_xyzc(nx4);
 //    auto obj_list = helpers::numpy_2_idclass
-    MvbbEvaluator scene;
+    BoxScene scene;
     scene.populate(pointcloud, object_name_map);
     return scene;
 }
@@ -35,7 +33,7 @@ PYBIND11_MODULE(BoxOffice, module_handle) {
                 return helpers::bbox_2_numpy(self);
             })
             .def("volume", &BBox::volume)
-            .def("intersect", [](const BBox &self, MvbbEvaluator &scene) {
+            .def("intersect", [](const BBox &self, BoxScene &scene) {
                 return self.intersect<pointcloud_xyzc>(scene.get_pointcloud());
             });
 
@@ -74,19 +72,19 @@ PYBIND11_MODULE(BoxOffice, module_handle) {
                 return p;
             }));
 
-    py::class_<MvbbEvaluator>(module_handle, "BoxScene")
+    py::class_<BoxScene>(module_handle, "BoxScene")
             .def(py::init<>())
-            .def("list_objects", &MvbbEvaluator::get_objectlist) //only work if scene is loaded
-            .def("get_points", [](MvbbEvaluator &self) {
+            .def("list_objects", &BoxScene::get_objectlist) //only work if scene is loaded
+            .def("get_points", [](BoxScene &self) {
                 return helpers::xyzc_2_numpy(self.get_pointcloud());
             })
-            .def("get_object", [](MvbbEvaluator &self, int object_id) {
+            .def("get_object", [](BoxScene &self, int object_id) {
                 return self.get_object(object_id);
             });
     // get_points
 
     module_handle.def("create_scene", [](const std::string &point_src, const std::string &class_src) {
-        return create_mvbbevaluator(point_src, class_src);
+        return create_scene(point_src, class_src);
     });
 
 

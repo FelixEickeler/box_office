@@ -1,4 +1,10 @@
 set(BINARY ${CMAKE_PROJECT_NAME}_testing)
+if(NOT TARGET spdlog)
+    # Stand-alone build
+    find_package(spdlog REQUIRED)
+endif()
+
+# Setup targets
 
 #setup gtest
 add_subdirectory("${PROJECT_SOURCE_DIR}/../modules/googletest" "modules/googletest" EXCLUDE_FROM_ALL)
@@ -14,12 +20,12 @@ include(GoogleTest)
 #setup test targets
 file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false *.h *.cpp)
 add_executable(valgrind_decompose valgrind_decompose_target.cpp )
-target_link_libraries(valgrind_decompose PRIVATE CGAL::CGAL CGAL::Eigen3_support)
+target_link_libraries(valgrind_decompose PRIVATE CGAL::CGAL CGAL::Eigen3_support spdlog::spdlog)
 target_include_directories(valgrind_decompose PUBLIC ../code)
 target_link_libraries(valgrind_decompose PUBLIC ${CMAKE_PROJECT_NAME}_lib )
 
 add_executable(minimal_example bbox_minimal.cpp)
-target_link_libraries(minimal_example PRIVATE CGAL::CGAL CGAL::Eigen3_support)
+target_link_libraries(minimal_example PRIVATE CGAL::CGAL CGAL::Eigen3_support spdlog::spdlog)
 target_include_directories(minimal_example PUBLIC ../code)
 target_link_libraries(minimal_example PUBLIC ${CMAKE_PROJECT_NAME}_lib )
 
@@ -27,7 +33,7 @@ target_link_libraries(minimal_example PUBLIC ${CMAKE_PROJECT_NAME}_lib )
 
 list(REMOVE_ITEM TEST_SOURCES "${PROJECT_SOURCE_DIR}/tests/valgrind_decompose_target.cpp")
 add_executable(${BINARY} ${TEST_SOURCES})
-target_link_libraries(${BINARY} PRIVATE gtest gtest_main CGAL::CGAL CGAL::Eigen3_support)
+target_link_libraries(${BINARY} PRIVATE gtest gtest_main CGAL::CGAL CGAL::Eigen3_support spdlog::spdlog)
 target_include_directories(${BINARY} PUBLIC ../code)
 target_link_libraries(${BINARY} PUBLIC ${CMAKE_PROJECT_NAME}_lib )
 

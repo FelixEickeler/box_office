@@ -30,6 +30,8 @@ if(NOT TARGET CGAL::Eigen3_support)
     return()
 endif()
 
+# SPDLOG
+add_subdirectory(../modules/spdlog ./spdlog EXCLUDE_FROM_ALL)
 # Boost
 #find_package( Boost REQUIRED COMPONENTS ranges)
 #include_directories( ${Boost_INCLUDE_DIRS} )

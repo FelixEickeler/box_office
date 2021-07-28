@@ -77,24 +77,16 @@ class FitAndSplitHierarchy {
         }
 
         float current_hierarchy_volume(){
-            return std::accumulate(nodes.begin(), nodes.end(), 0.0f, [](float sum, auto& node){return node.bounding_box.volume() + sum;});
+            return std::accumulate(nodes.begin(), nodes.end()-1, 0.0f, [](float sum, auto& cur_nodes){
+                return std::accumulate(cur_nodes.begin(), cur_nodes.end(), 0.0f, [](float inner_sum, const auto& node){
+                    return node.final ? node.bounding_box.volume() + inner_sum : inner_sum;
+                }) + sum;
+            }) + current_depth_volume();
         }
-//        boxy::VectorView<typename std::vector<TNodeType>::const_iterator> getNodes(uint32_t kappa){
-//            uint32_t start_index;
-//            uint32_t end_index;
-//            if(kappa >= 1) {
-////                kappa -= 1; // shift1
-//                uint32_t nr_bboxes = 1 << kappa;
-//                start_index = nr_bboxes-1;
-//                end_index = start_index+ nr_bboxes;
-//            }
-//            else{
-//                start_index = 0;
-//                end_index = 1;
-//            }
-//            return boxy::VectorView(flat_hierarchy.cbegin() + start_index, flat_hierarchy.cbegin() + end_index);
-//        }
 
+        float current_depth_volume(){
+            return std::accumulate(nodes.back().begin(), nodes.back().end(), 0.0f, [](float sum, auto& node){return node.bounding_box.volume() + sum;});
+        }
 };
 
 #include <functional>

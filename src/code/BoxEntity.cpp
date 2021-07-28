@@ -3,7 +3,6 @@
 //
 
 #include "BoxEntity.h"
-#include "FitAndSplitHierarchy.h"
 
 std::vector<FitAndSplitNode<pointcloud_xyzc>> BoxEntity::decompose(int depth, float gain_threshold) {
     if(decomposition_level < depth || used_gain != gain_threshold) {
@@ -14,7 +13,6 @@ std::vector<FitAndSplitNode<pointcloud_xyzc>> BoxEntity::decompose(int depth, fl
         return this->tree_hierarchy.get_finalized();
     }
     else{
-//        std::vector<mvbb::FitAndSplitNode<pointcloud_xyzc>> collection;
         auto previous_levels = this->tree_hierarchy.get_finalized(depth);
         auto this_level = this->tree_hierarchy.getNodes(depth);
         for(auto& tl : this_level){

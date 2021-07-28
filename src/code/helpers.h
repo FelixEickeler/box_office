@@ -13,6 +13,7 @@
 #include <CGAL/Surface_mesh.h>
 #include "trim.h"
 #include <CGAL/IO/write_off_points.h>
+#include <spdlog/spdlog.h>
 
 
 std::tuple<CGAL::Surface_mesh<boxy::Point>, std::array<boxy::Point,4>> Plane2Mesh(boxy::Point o1, boxy::Point p1, boxy::Point p2, bool swap_normal_direction=false);
@@ -38,8 +39,6 @@ namespace  helpers {
         return range_t<T>(a, b);
     }
 
-//    auto split(std::string const &str, const char delim);
-
     template<int Tn>
     auto take_first_n(std::string const &str, const char delim) {
         std::array<std::string, Tn> first_n;
@@ -62,9 +61,12 @@ namespace  helpers {
                 entries.emplace_back(take_first_n<TColumns>(line, ' '));
             }
             ins.close();
-        } else
-            std::cout << "Could not open: " + path.generic_string() << std::endl;
-        std::cout << "Reading File in lines:" << entries.size() << " fround\n";
+        }
+        else {
+            spdlog::error("Could not open: {}", std::filesystem::weakly_canonical(path).generic_string());
+        }
+
+        spdlog::debug("Reading File in lines => {} fround", entries.size());
         return entries;
     }
 

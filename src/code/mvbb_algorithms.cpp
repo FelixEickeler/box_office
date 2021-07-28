@@ -1,12 +1,17 @@
 //
 // Created by felix on 18.07.2021.
 //
+#include <spdlog/spdlog.h>
+#include "spdlog/stopwatch.h"
 #include "mvbb_algorithms.h"
 #include "FitAndSplitHierarchy.h"
 
 using namespace mvbb;
 
 FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3D, Algo_Base<TPointCloudType> *const bbox_algorithm, uint32_t kappa, float gain_threshold) {
+    spdlog::trace("Processing: {} Points, with {} kappa", points3D.size(), kappa);
+    spdlog::set_pattern("\t[%^%l%$][%S,%es] %v");
+    spdlog::stopwatch sw;
 
     auto initial_bbox = bbox_algorithm->fit_bounding_box(points3D);
     FitAndSplitHierarchy<TPointCloudType> tree;
@@ -15,11 +20,10 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
     for(auto depth=0; depth<kappa; ++depth){
         int node_counter = 0;
         if(tree.depth() <= depth) break;
-        auto& cur_hierarchy_nodes = tree.getNodes(depth);
-        float cur_hierarchy_volume = std::accumulate(cur_hierarchy_nodes.begin(), cur_hierarchy_nodes.end(), 0.0f, [](float sum, auto& node){return node.bounding_box.volume() + sum;});
-        std::cout << "hierarchy_volume:" << cur_hierarchy_volume / initial_bbox.volume()<< "\n";
+        auto current_hierarchy_volume = tree.current_hierarchy_volume();
+        spdlog::debug("Decomposing level: {0} with {1} max gain and a hierarchy volume {2}", depth, gain_threshold, current_hierarchy_volume / initial_bbox.volume());
 
-        for(auto& fas_node : cur_hierarchy_nodes) {   //std::for_each(all_parents.begin(), all_parents.end(), [&tree, bbox_algorithm, depth, &node_counter](auto& fas_node){
+        for(auto& fas_node : tree.getNodes(depth)) {   //std::for_each(all_parents.begin(), all_parents.end(), [&tree, bbox_algorithm, depth, &node_counter](auto& fas_node){
             auto bbox = fas_node.bounding_box;
             std::array<BestSplit, 6> all_splits;
             // A=0; B=1; C=2 => see typdef::BoxFaces;
@@ -141,7 +145,7 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
             if(vector_bbox1.size() > 10 && vector_bbox1.size() > 10) {
                 bbox1 = bbox_algorithm->fit_bounding_box(vector_bbox1);
                 bbox2 = bbox_algorithm->fit_bounding_box(vector_bbox2);
-                gain = (cur_hierarchy_volume - fas_node.bounding_box.volume() + bbox1.volume() + bbox2.volume()) / cur_hierarchy_volume;
+                gain = (current_hierarchy_volume - fas_node.bounding_box.volume() + bbox1.volume() + bbox2.volume()) / current_hierarchy_volume;
                 //calculate gain
                 if(gain < gain_threshold && bbox2.volume() > initial_bbox.volume()/1000 && bbox2.volume() > initial_bbox.volume() / 1000){
                     tree.emplace_back(depth+1, bbox1, fas_node.points.begin(), second_bbox_begins_at);
@@ -158,16 +162,16 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
                 fas_node.final = true;
             }
             // print statistics
-            std::cout << "\tLevel: " << depth << "\tbox: " << node_counter++ << "\tgain: " << gain << "\t"<< status << "\n";
+            spdlog::trace("Box: {0}\t Points: {1}\t=>\t({2}\t|\t{3})\t gain: {4}\t status: {5}", node_counter, fas_node.points.size(), vector_bbox1.size(), vector_bbox2.size(), gain, status);
+            node_counter++;
         }
     }
     auto& final_hierachy_nodes = tree.max_depth();
-    float cur_hierarchy_volume = std::accumulate(final_hierachy_nodes.begin(), final_hierachy_nodes.end(), 0.0f, [](float sum, auto& node){return node.bounding_box.volume() + sum;});
-    std::cout << "final_hierarchy_volume:" << cur_hierarchy_volume / initial_bbox.volume()<< "\n";
-
-    // finalize
+    // finalize last level of nodes
     for(auto& node : tree.max_depth()){
         node.final = true;
     }
+    spdlog::debug("Decomposition took: {} seconds. Final hierarchy volume:\t {}", sw, tree.current_hierarchy_volume() / initial_bbox.volume());
+    spdlog::set_pattern("%+");
     return tree;
 }
