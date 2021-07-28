@@ -4,3 +4,6 @@
 [submodule "modules/pybind11"]
 	path = modules/pybind11
 	url = https://github.com/pybind/pybind11.git
+[submodule "modules/spdlog"]
+	path = modules/spdlog
+	url = https://github.com/gabime/spdlog.git
