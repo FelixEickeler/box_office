@@ -90,7 +90,7 @@ if __name__ == "__main__":
         obj_base_path = Path(out_path / o.get_name())
         obj_truth = Pointcloud(o.get_points())
 
-        for kappa in range(max_kappa):
+        for kappa in range(max_kappa+1):
             dec_base_path = obj_base_path / "bboxes" / "{}_{}".format(kappa, gain)
             dec_base_path.parent.mkdir(parents=True, exist_ok=True)
             orig_boxes = o.decompose(kappa)

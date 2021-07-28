@@ -136,7 +136,7 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
             BBox bbox2;
 
             // Reject if gain or points are not enough
-            if(vector_bbox1.size() > 4 && vector_bbox1.size() > 4) {
+            if(vector_bbox1.size() > 10 && vector_bbox1.size() > 10) {
                 bbox1 = bbox_algorithm->fit_bounding_box(vector_bbox1);
                 bbox2 = bbox_algorithm->fit_bounding_box(vector_bbox2);
             }
@@ -161,6 +161,10 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
             std::cout << "\tLevel: " << depth << "\tbox: " << node_counter++ << "\tgain: " << gain << "\t"<< status << "\n";
         }
     }
+    auto& final_hierachy_nodes = tree.max_depth();
+    float cur_hierarchy_volume = std::accumulate(final_hierachy_nodes.begin(), final_hierachy_nodes.end(), 0.0f, [](float sum, auto& node){return node.bounding_box.volume() + sum;});
+    std::cout << "final_hierarchy_volume:" << cur_hierarchy_volume / initial_bbox.volume()<< "\n";
+
     // finalize
     for(auto& node : tree.max_depth()){
         node.final = true;
