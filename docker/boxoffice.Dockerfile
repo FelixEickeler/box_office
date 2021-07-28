@@ -3,6 +3,7 @@ FROM debian:bullseye-slim
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV LANG C.UTF-8
+ENV TERM xterm-256color
 
 RUN apt-get clean && apt-get update && apt-get install -y \
     build-essential \
@@ -30,7 +31,7 @@ RUN apt-get clean && apt-get update && apt-get install -y \
     libtbb-dev \
     zlib1g-dev \
     python3 gosu sudo openssh-server gdb \
-    htop nano python3-distutils libpython3-dev python3-pip libtbb-dev rsync valgrind
+    htop nano python3-distutils libpython3-dev python3-pip libtbb-dev rsync valgrind bash-completion
 
 # Get CGAL (optional I guess ?)Dependencies
 RUN git clone https://github.com/STORM-IRIT/OpenGR.git --depth 1 \
