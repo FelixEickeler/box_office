@@ -72,7 +72,7 @@ RUN git clone git://github.com/ethz-asl/libpointmatcher.git \
 
 
 RUN pip3 install numpy scikit-learn scipy #open3d
-RUN pip install --pre https://storage.googleapis.com/open3d-releases-master/python-wheels/open3d-0.13.0+7c62640-cp39-cp39-manylinux_2_27_x86_64.whl
+RUN pip install --pre https://u.pcloud.link/publink/show?code=XZA1SxXZgAYm2L90rnBN8qMWS25wn4jRHMwV
 
 
 # create user, ids are temporary
