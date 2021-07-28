@@ -3,7 +3,7 @@
 //
 
 #include "typedefs.h"
-#include "mvbb_algorithm.h"
+#include "mvbb_algorithms.h"
 #include <CGAL/Polygon_mesh_processing/IO/polygon_mesh_io.h>
 #include <Evaluator.h>
 #include <CGAL/Point_set_3/IO/OFF.h>

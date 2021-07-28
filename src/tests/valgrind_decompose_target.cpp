@@ -2,7 +2,7 @@
 // Created by felix on 17.07.2021.
 //
 #include "typedefs.h"
-#include "mvbb_algorithm.h"
+#include "mvbb_algorithms.h"
 #include <CGAL/Polygon_mesh_processing/IO/polygon_mesh_io.h>
 #include <Evaluator.h>
 

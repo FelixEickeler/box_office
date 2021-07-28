@@ -5,7 +5,11 @@ set(BINARY ${CMAKE_PROJECT_NAME})
 
 message("Current Directory:" ${PROJECT_SOURCE_DIR})
 #set(CMAKE_CXX_FLAGS_DEBUG "-g -O2")
-set(CMAKE_BUILD_TYPE "Release")
+#set(CMAKE_BUILD_TYPE "Release")
+
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/_build/ CACHE PATH "..." FORCE)
+endif()
 
 add_compile_definitions (CGAL_DISABLE_ROUNDING_MATH_CHECK=ON)
 # Setup foreign projects
@@ -35,7 +39,6 @@ option(PACKAGE_TESTS "Build the tests" ON)
 if(PACKAGE_TESTS)
     add_subdirectory(tests)
 endif()
-
 
 
 #target_link_libraries(mvbb PRIVATE )

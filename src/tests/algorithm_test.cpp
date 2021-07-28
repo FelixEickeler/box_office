@@ -3,7 +3,7 @@
 //
 
 #include "gtest/gtest.h"
-#include "mvbb_algorithm.h"
+#include "mvbb_algorithms.h"
 #include <algorithm>
 #include "typedefs.h"
 #include <CGAL/Polygon_mesh_processing/IO/polygon_mesh_io.h>
@@ -197,7 +197,7 @@ TEST (algorithm_testing /*test suite name*/, min_split_2 /*test name*/) {
 }
 
 TEST (algorithm_testing /*test suite name*/, Algo_MVBB/*test name*/) {
-    mvbb::Algo_MVBB<pointcloud_xyzc> algo;
+    mvbb::CGAL_MVBB<pointcloud_xyzc> algo;
     std::filesystem::path source_pig("../../tests/data/pig.off");
     std::filesystem::path proof_piggybox("../../tests/data/pig_bbox.off");
     CGAL::Surface_mesh<Point> sm;
@@ -229,7 +229,7 @@ TEST (algorithm_testing /*test suite name*/, Algo_PCA/*test name*/) {
 }
 
 TEST (algorithm_testing /*test suite name*/, decompose3D/*test name*/) {
-    mvbb::Algo_MVBB<pointcloud_xyzc> mvbb;
+    mvbb::CGAL_MVBB<pointcloud_xyzc> mvbb;
     std::filesystem::path source_pig("../../tests/data/bunny00.off");
     CGAL::Surface_mesh<Point> sm;
     if (!CGAL::Polygon_mesh_processing::IO::read_polygon_mesh(source_pig, sm) || sm.is_empty()) {

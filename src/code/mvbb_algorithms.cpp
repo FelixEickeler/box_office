@@ -1,8 +1,8 @@
 //
 // Created by felix on 18.07.2021.
 //
-#include "mvbb_algorithm.h"
-#include "helpers.h"
+#include "mvbb_algorithms.h"
+#include "FitAndSplitHierarchy.h"
 
 using namespace mvbb;
 
@@ -136,25 +136,25 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
             BBox bbox2;
 
             // Reject if gain or points are not enough
+            std::string status = "rejected";
+            float gain = -1;
             if(vector_bbox1.size() > 10 && vector_bbox1.size() > 10) {
                 bbox1 = bbox_algorithm->fit_bounding_box(vector_bbox1);
                 bbox2 = bbox_algorithm->fit_bounding_box(vector_bbox2);
+                gain = (cur_hierarchy_volume - fas_node.bounding_box.volume() + bbox1.volume() + bbox2.volume()) / cur_hierarchy_volume;
+                //calculate gain
+                if(gain < gain_threshold && bbox2.volume() > initial_bbox.volume()/1000 && bbox2.volume() > initial_bbox.volume() / 1000){
+                    tree.emplace_back(depth+1, bbox1, fas_node.points.begin(), second_bbox_begins_at);
+                    tree.emplace_back(depth+1, bbox2, second_bbox_begins_at, fas_node.points.end());
+                    status = "accepted";
+                }
+                else{
+                    //  reject and not push them to the tree e.g. take the parent
+                    fas_node.final = true;
+                }
             }
             else{
-                fas_node.final = true;
-                // this will reject and not push them to the tree
-                continue;
-            }
-            //calculate gain
-            auto gain = (cur_hierarchy_volume - fas_node.bounding_box.volume() + bbox1.volume() + bbox2.volume()) / cur_hierarchy_volume;
-            std::string status = "rejected";
-
-            if(gain < gain_threshold && bbox2.volume() > initial_bbox.volume()/1000 && bbox2.volume() > initial_bbox.volume() / 1000){
-                tree.emplace_back(depth+1, bbox1, fas_node.points.begin(), second_bbox_begins_at);
-                tree.emplace_back(depth+1, bbox2, second_bbox_begins_at, fas_node.points.end());
-                status = "accepted";
-            }
-            else{
+                // reject and not push them to the tree
                 fas_node.final = true;
             }
             // print statistics

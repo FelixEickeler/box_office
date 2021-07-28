@@ -3,9 +3,9 @@
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
 //#include <pybind11/pickle.h>
-#include "code/mvbb_algorithm.h"
+#include "code/mvbb_algorithms.h"
 #include "code/pybind_helpers.h"
-
+#include "code/FitAndSplitHierarchy.h"
 namespace py = pybind11;
 
 BBox create_from_list(py::array_t<float> numpy83){
@@ -39,7 +39,7 @@ PYBIND11_MODULE(BoxOffice, module_handle) {
                 return self.intersect<pointcloud_xyzc>(scene.get_pointcloud());
             });
 
-    using _node = mvbb::FitAndSplitNode<pointcloud_xyzc>;
+    using _node = FitAndSplitNode<pointcloud_xyzc>;
     py::class_<_node>(module_handle, "BoxNode")
             .def_property_readonly("bounding_box", [](_node &self) {
                 return self.bounding_box;

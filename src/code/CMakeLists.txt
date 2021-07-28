@@ -19,6 +19,9 @@ target_link_libraries(${BINARY}_lib PRIVATE tbb CGAL::CGAL CGAL::Eigen3_support 
 target_sources(${BINARY}_lib PRIVATE ${sources})
 
 
+
+install(TARGETS BoxOffice DESTINATION ../../python)
+
 #target_link_libraries(mvbb PRIVATE )
 #set(CGAL_DO_NOT_WARN_ABOUT_CMAKE_BUILD_TYPE TRUE)
 #set(CMAKE_BUILD_TYPE Release)

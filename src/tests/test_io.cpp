@@ -34,7 +34,7 @@ TEST (io_testing /*test suite name*/, decompose_2/*test name*/) {
     auto eval = create_mvbbevaluator("../../../python/tests/data/sample2_full.pcs",
                                      "../../../python/tests/data/sample2_full.ol");
    auto entity = eval.get_object(1);
-   mvbb::Algo_MVBB<boxy::pointcloud_xyzc> algo;
+   mvbb::CGAL_MVBB<boxy::pointcloud_xyzc> algo;
    auto epoints = entity.get_points();
    mvbb::decompose3D(epoints, &algo, 1, 0.99);
 }
