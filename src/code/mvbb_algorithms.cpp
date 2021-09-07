@@ -143,7 +143,10 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
             std::string status = "rejected";
             float gain = -1;
             if(vector_bbox1.size() > 10 && vector_bbox1.size() > 10) {
+                spdlog::debug("First Box: {}", vector_bbox1.size());
                 bbox1 = bbox_algorithm->fit_bounding_box(vector_bbox1);
+
+                spdlog::debug("Second Box: {}", vector_bbox1.size());
                 bbox2 = bbox_algorithm->fit_bounding_box(vector_bbox2);
                 gain = (current_hierarchy_volume - fas_node.bounding_box.volume() + bbox1.volume() + bbox2.volume()) / current_hierarchy_volume;
                 //calculate gain

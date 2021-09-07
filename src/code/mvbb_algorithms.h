@@ -63,26 +63,7 @@ namespace mvbb {
         }
         return BBox(vertices);
     }
-//
-//    template<class TPointCloudType>
-//    class Algo_PCA : Algo_Base<TPointCloudType>{
-//       BBox fit_bounding_box(TPointCloudType& points3D);
-//    };
-//
-//    template<class TPointCloudType>
-//    BBox Algo_PCA<TPointCloudType>::fit_bounding_box(TPointCloudType &points3D) {
-//        // TODO: write test for pca fit
-//        BBox tmp;
-//        CGAL::Simple_cartesian<float>::Iso_cuboid_3 c3 = CGAL::bounding_box(points3D->begin(), points3D->end());
-//        for(auto i=0; i < 8; ++i){
-//            tmp.vertices[i] = c3.vertex(i);
-//        }
-//        return tmp;
-//    }
 
-
-
-//    template<class TPointCloudType>
     using TPointCloudType = pointcloud_xyzc;
     FitAndSplitHierarchy<TPointCloudType> decompose3D(TPointCloudType &points3D, Algo_Base<TPointCloudType> *bbox_algorithm,
                                                       uint32_t kappa, float gain_threshold = 0.99);

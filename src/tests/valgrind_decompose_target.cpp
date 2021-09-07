@@ -17,7 +17,7 @@ int main(int argc, char* args[]){
     spdlog::set_level(spdlog::level::trace);
     for(auto& entity : scene.get_objectlist()){
         spdlog::info("Entity Name: {}", entity.second.get_name());
-        auto boxes = entity.second.decompose(64);
+        auto boxes = entity.second.decompose(4);
         all_boxes.insert_or_assign(entity.second.get_name(), boxes);
         spdlog::set_pattern("%+");
     }

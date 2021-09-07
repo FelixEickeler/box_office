@@ -41,6 +41,7 @@ calculate_introduced_labelling_error = True
 calculate_introduced_sampling_error = True
 
 if __name__ == "__main__":
+    bof.set_logger_level("trace")
     down_scenarios = [["rand_samp", ratio] for ratio in [0.1, 0.2]]
     down_scenarios += [["min_dist_samp", ratio] for ratio in [0.0137, 0.0194]]
     up_scenarios = [["near_one", ratio] for ratio in [1]]

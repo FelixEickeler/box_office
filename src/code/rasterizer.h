@@ -198,18 +198,4 @@ namespace mvbb {
 
 }
 
-//#include <functional>
-//#include <algorithm>
-//#include <CGAL/optimal_bounding_box.h>
-//#include <CGAL/Simple_cartesian.h>
-//#include <CGAL/bounding_box.h>
-//#include <iterator>
-//#include <fstream>
-//#include <CGAL/IO/write_off_points.h>
-//#include <CGAL/Surface_mesh.h>
-//#include <CGAL/Origin.h>
-//#include "typedefs.h"
-//#include "helpers.h"
-//#include "helpers_nobind.h"
-
 #endif //BOXOFFICE_RASTERIZER_H

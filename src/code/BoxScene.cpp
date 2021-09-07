@@ -1,33 +1,4 @@
-
 #include "BoxScene.h"
-#include "helpers.h"
-#include "pybind_helpers.h"
-#include <execution>
-#include <algorithm>
-#include <array>
-
-
-#include <fstream>
-#include <iostream>
-#include <map>
-#include <unordered_map>
-#include <utility>
-
-#include <CGAL/Simple_cartesian.h>
-#include <CGAL/bounding_box.h>
-#include <CGAL/optimal_bounding_box.h>
-#include <CGAL/Surface_mesh.h>
-#include <spdlog/spdlog.h>
-
-
-typedef double                     FT;
-typedef CGAL::Simple_cartesian<FT> K;
-typedef K::Point_2                 Point_2;
-typedef K::Point_3                 Point_3;
-typedef CGAL::Surface_mesh<Point>  Surface_mesh;
-
-
-
 BoxScene::BoxScene() = default;
 
 void BoxScene::set_pointcloud_path(const std::string& _path) {

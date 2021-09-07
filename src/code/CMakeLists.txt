@@ -10,8 +10,9 @@ endif()
 pybind11_add_module(BoxOffice ../main.cpp)
 file(GLOB sources LIST_DIRECTORIES true *.h *.cpp)
 target_compile_definitions(BoxOffice PRIVATE VERSION_INFO=${EXAMPLE_VERSION_INFO})
-target_link_libraries(BoxOffice PRIVATE tbb CGAL::CGAL CGAL::Eigen3_support spdlog::spdlog)
+target_link_libraries(BoxOffice PRIVATE tbb CGAL::CGAL CGAL::Eigen3_support spdlog::spdlog_header_only)
 target_sources(BoxOffice PRIVATE ${sources})
+set_property(TARGET BoxOffice PROPERTY POSITION_INDEPENDENT_CODE ON)
         #Evaluator.cpp Evaluator.h helpers.h helpers.cpp typedefs.h trim.h algorithm.cpp algorithm.h)
 
 # 2.) test / lib target

@@ -4,11 +4,7 @@
 
 #ifndef TEST_BIND_TYPEDEFS_H
 #define TEST_BIND_TYPEDEFS_H
-#define BOOST_BIND_GLOBAL_PLACEHOLDERS
-//#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
-#include <CGAL/Simple_cartesian.h>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
-//
 #include <tuple>
 #include <filesystem>
 #include <CGAL/property_map.h>
@@ -19,7 +15,6 @@
 
 namespace boxy{
     typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
-//    typedef CGAL::Simple_cartesian<float> Kernel;
     typedef Kernel::Point_3 Point;
     typedef std::tuple<Point, uint32_t> XYZC;
     typedef CGAL::Nth_of_tuple_property_map<0, XYZC> Point_map;

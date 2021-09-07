@@ -87,6 +87,16 @@ PYBIND11_MODULE(BoxOffice, module_handle) {
         return create_scene(point_src, class_src);
     });
 
+    module_handle.def("set_logger_level", [](const std::string &log_level){
+       if (log_level == "trace"){ spdlog::set_level(spdlog::level::trace); return;}
+       if (log_level == "debug"){ spdlog::set_level(spdlog::level::trace); return;}
+       if (log_level == "info"){ spdlog::set_level(spdlog::level::trace); return;}
+       if (log_level == "warn"){ spdlog::set_level(spdlog::level::trace); return;}
+       if (log_level == "err"){ spdlog::set_level(spdlog::level::trace); return;}
+       if (log_level == "critical"){ spdlog::set_level(spdlog::level::trace); return;}
+       if (log_level == "off"){ spdlog::set_level(spdlog::level::trace); return;}
+       spdlog::warn("Logger Level {} does not exist. Use: trace, debug, info, warn, err, critical or off", log_level);
+    });
 
     module_handle.def("create_scene", [](const py::array &point_src, std::unordered_map<int, std::string> class_src) {
         return create_scene_from_2numpy(point_src, std::move(class_src));
