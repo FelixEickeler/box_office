@@ -25,7 +25,7 @@ install(TARGETS BoxOffice DESTINATION ../../python)
 
 #target_link_libraries(mvbb PRIVATE )
 #set(CGAL_DO_NOT_WARN_ABOUT_CMAKE_BUILD_TYPE TRUE)
-#set(CMAKE_BUILD_TYPE Release)
+
 
 
 

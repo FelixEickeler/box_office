@@ -12,28 +12,37 @@ import csv
 
 print('Welcome to the Box Office!')
 # '../data/in/bunny_classy_head.txt' # // '../data/in/bunny_classy_head.ol' #
-point_src = '../data/in/bunny_classy.txt'  # "../data/in/down__testing_2_random_sampling_0.2.txt"  #'../data/in/bunny_classy.off'
-class_src = '../data/in/bunny_classy.ol'  # "../data/in/down__testing_2.ol"  #'../data/in/bunny_classy.ol' #
+point_src = "../data/in/2021-09-08-box_office_rail_test_snippet.pcs"  # '../data/in/rail_example.pcs'  # "../data/in/down__testing_2_random_sampling_0.2.txt"  #'../data/in/bunny_classy.off'
+class_src = '../data/in/rail_example.ol'  # "../data/in/down__testing_2.ol"  #'../data/in/bunny_classy.ol' #
+filename = "rail_example"
 
 
 # TODO Make static
 
 # cloudy.save_to_txt('/home/boxy/BoxOffice/data/active/testing_2/intermediate/yo.txt')
 
-def load_or_save_boxes(node_list, base_path, name):
+def load_or_save_boxes(node_list, base_path, name, save_as_off=False):
     cnt = 0
     for node in node_list:
         cnt += 1
         bbox_path = base_path / "{}_{}.txt".format(name, cnt)
         bbox_path.parent.mkdir(parents=True, exist_ok=True)
         np.savetxt(bbox_path, node.bounding_box.get_vertices(), fmt="%1.8f")
+        if save_as_off:
+            # with open(bbox_path.with_suffix(".off"), "w") as file, open(bbox_path, "r") as fill:
+            pre = "OFF\n8 6 0"  # "# Created with TUMCMS-BoxOffice" \
+            post = "4  0 1 6 5  255 0 0\n" \
+                   "4  5 6 7 4  0 255 0\n" \
+                   "4  1 2 7 6  0 0 255\n" \
+                   "4  2 3 4 7  0 255 0\n" \
+                   "4  0 1 2 3  0 0 255\n" \
+                   "4  0 3 4 5  255 0 0\n"
+            np.savetxt(bbox_path.with_suffix(".off"), node.bounding_box.get_vertices(), fmt="%1.8f", comments='', header=pre, footer=post)
 
-
-# Felix added this:
 
 gain = 0.99
 max_kappa = 4
-no_cache = False
+no_cache = True
 out_path = Path("../data/out")
 calculate_pure_sampling_error = True
 calculate_pure_labelling_error = True
@@ -43,7 +52,7 @@ calculate_introduced_sampling_error = True
 if __name__ == "__main__":
     bof.set_logger_level("trace")
     down_scenarios = [["rand_samp", ratio] for ratio in [0.1, 0.2]]
-    down_scenarios += [["min_dist_samp", ratio] for ratio in [0.0137, 0.0194]]
+    down_scenarios += [["min_dist_samp", ratio] for ratio in [0.08055, 0.052]]
     up_scenarios = [["near_one", ratio] for ratio in [1]]
     up_scenarios += [["near_k", ratio] for ratio in [5]]
 
@@ -85,17 +94,19 @@ if __name__ == "__main__":
             PSE.append({"pse": pse_error, "down-sampling": dmethod, "down-param": dparam, "up-sampling": umethod, "up-param": uparam, "path": up_path, "ukey": ukey})
 
     # TODO write PSE
-
     scene_list = scene.list_objects()
+    del scene_list[17]
     for o_id, o in scene_list.items():
         obj_base_path = Path(out_path / o.get_name())
         obj_truth = Pointcloud(o.get_points())
+        if len(obj_truth.xyzl) < 10:
+            continue
 
-        for kappa in range(max_kappa+1):
+        for kappa in range(max_kappa + 1):
             dec_base_path = obj_base_path / "bboxes" / "{}_{}".format(kappa, gain)
             dec_base_path.parent.mkdir(parents=True, exist_ok=True)
             orig_boxes = o.decompose(kappa)
-            load_or_save_boxes(orig_boxes, dec_base_path, "original")
+            load_or_save_boxes(orig_boxes, dec_base_path, "original", save_as_off=True)
 
             # CALCULATE PLE
             wrong_cls_in_obj = 0
@@ -146,28 +157,28 @@ if __name__ == "__main__":
                         ISE.append({"kappa": kappa, "gain": gain, "obj_name": o.get_name(), "id": o.get_id(), "ise": ise_count / ref_inside.size, "down-sampling": dmethod,
                                     "down-param": dparam, "up-sampling": umethod, "up-param": uparam})
 
-    with open(out_path / 'bunny_pse.csv', mode='w') as csv_file:
+    with open(out_path / '{}_pse.csv'.format(filename), mode='w') as csv_file:
         fieldnames = ["down-sampling", "down-param", "up-sampling", "up-param", "pse", "path", "ukey"]
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         writer.writeheader()
         for row in PSE:
             writer.writerow(row)
 
-    with open(out_path / 'bunny_ple.csv', mode='w') as csv_file:
+    with open(out_path / '{}_ple.csv'.format(filename), mode='w') as csv_file:
         fieldnames = ["kappa", "gain", "obj_name", "id", "ple"]
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         writer.writeheader()
         for row in PLE:
             writer.writerow(row)
 
-    with open(out_path / 'bunny_ile.csv', mode='w') as csv_file:
+    with open(out_path / '{}_ile.csv'.format(filename), mode='w') as csv_file:
         fieldnames = ["kappa", "gain", "obj_name", "id", "down-sampling", "param", "ile"]
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         writer.writeheader()
         for row in ILE:
             writer.writerow(row)
 
-    with open(out_path / 'bunny_ise.csv', mode='w') as csv_file:
+    with open(out_path / '{}_ise.csv'.format(filename), mode='w') as csv_file:
         fieldnames = ["kappa", "gain", "obj_name", "id", "ise", "down-sampling", "down-param", "up-sampling", "up-param"]
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         writer.writeheader()

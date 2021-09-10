@@ -72,7 +72,8 @@ RUN git clone git://github.com/ethz-asl/libpointmatcher.git \
 
 
 RUN pip3 install numpy scikit-learn scipy #open3d
-RUN pip install --pre https://u.pcloud.link/publink/show?code=XZA1SxXZgAYm2L90rnBN8qMWS25wn4jRHMwV
+#Fix as open3D only has nighlies for python 3.9
+RUN pip install --pre https://filedn.com/lLjUrf9apNYzbv3LcEwzgcj/binary_supply/open3d-0.13.0%2B4b1a5e0-cp39-cp39-manylinux_2_27_x86_64.whl
 
 
 # create user, ids are temporary
