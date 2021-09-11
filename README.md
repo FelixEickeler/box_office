@@ -6,7 +6,7 @@
 
 The concept was presented on the Forum Bauinformatik 2021. Usage is experimental and cgal is sometime a little unstable.
 It will create a box hirachy of a given segmented point cloud. Its a hybrid approach pushing the compute to cgal/c++ and the evaluation to python. 
-Results of the box decomposition will look like this:
+results of the box decomposition will look like this:
 
 <img src="/docs/4_all_ob.png" height="260">
 
@@ -15,13 +15,13 @@ Behind the scenes the point cloud is saved in a single std::vector. The bounding
 point cloud with std::partition. This leaves the bounding box hierarchy (called FitAndSplitHierachy) completly without any points and just references to the start and end.
 
 [comment]: <> (![]&#40;/docs/bounding_hirachie.png&#41;)
-<img src="/docs/bounding_hirachie.png" height="700">
+<img src="/docs/bounding_hirachie.png" height="400">
 
 ### Python Interface
 These functions are avaiable after importing the BoxOffice into python:
 
 [comment]: <>
-<img src="/docs/python_interface.png" height="260">
+<img src="/docs/python_interface.png" height="400">
 
 ## How to get started:
 - start the __docker__ as daemon (see below)
