@@ -5,8 +5,9 @@
 <img src="/docs/overview_paper.png" height="260">
 
 The concept was presented on the Forum Bauinformatik 2021. Usage is experimental and cgal is sometime a little unstable.
-It will create a box hirachy of a given segmented point cloud.
-[comment]: <>
+It will create a box hirachy of a given segmented point cloud. Its a hybrid approach pushing the compute to cgal/c++ and the evaluation to python. 
+Results of the box decomposition will look like this:
+
 <img src="/docs/4_all_ob.png" height="260">
 
 ### Datastructure
@@ -17,16 +18,27 @@ point cloud with std::partition. This leaves the bounding box hierarchy (called 
 <img src="/docs/bounding_hirachie.png" height="700">
 
 ### Python Interface
+These functions are avaiable after importing the BoxOffice into python:
+
 [comment]: <>
 <img src="/docs/python_interface.png" height="260">
 
-# How to get started:
-- start the docker
-- recompile the c++ library with cmake and replace the given *.so file to ensure that the git version is compatible.
-- import boxoffice in python
-- see datastructure for more information
+## How to get started:
+- start the __docker__ as daemon (see below)
+- __recompile | update the c++ library__ and update in python directory
+  - open a comandline of your choice in the ./docker directory
+  - open a bash into the docker
+  ```
+     docker-compose exec -u boxy box-office bash
+     cd BoxOffice && mkdir _build && cd _build
+     cmake ../src
+     make -j 8 && cp code/BoxOffice*.so ../python/
+  ```
+- You can now use BoxOffice by writing import BoxOffice in python.
+  - if your working out of directory, make sure to add the python folder to the __$PATH__ !
+- see datastructure for more information about given functionality
 
-# :whale2: Docker -> full usage guide
+## :whale2: Docker -> full usage guide
 A docker was made available -
 
 ```
@@ -61,5 +73,6 @@ Do not forget to shutdown the docker after use with docker-compose down
 * make example in pyhton 
 * loader and dataprocessing tests in python ?!?
 * cgal work around (memory leak)
+* clean up cmake + install
  
 

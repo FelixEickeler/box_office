@@ -7,8 +7,8 @@ modules/wrapper_cgal
 .idea
 __pychache__
 modules
-/python/BoxOffice.cpython-38-x86_64-linux-gnu.so
-/data/
+python/*.so
+data/
 _build
 build
 pybin_bin

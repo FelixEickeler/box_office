@@ -82,7 +82,7 @@ RUN useradd -m --no-log-init boxy && yes brucelee | passwd boxy
 RUN usermod -aG sudo boxy
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 RUN chown -R boxy:boxy /home/boxy
-
+RUN git clone https://github.com/FelixEickeler/box_office.git BoxOffice
 
 # WORKDIR /home/boxy/
 
