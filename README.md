@@ -24,7 +24,11 @@ These functions are avaiable after importing the BoxOffice into python:
 <img src="/docs/python_interface.png" height="400">
 
 ## How to get started:
-- start the __docker__ as daemon (see below)
+- Clone this repository and pull the submodules used:
+  ```
+  git submodule update --init --recursive
+  ```
+- Start the __docker__ as daemon (see below)
 - __recompile | update the c++ library__ and update in python directory
   - open a comandline of your choice in the ./docker directory
   - open a bash into the docker

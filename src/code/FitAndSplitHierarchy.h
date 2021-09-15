@@ -5,18 +5,6 @@
 #ifndef BOXOFFICE_FITANDSPLITHIERARCHY_H
 #define BOXOFFICE_FITANDSPLITHIERARCHY_H
 #include "typedefs.h"
-//#include "helpers.h"
-//#include "rasterizer.h"
-//#include <functional>
-//#include <algorithm>
-//#include <CGAL/optimal_bounding_box.h>
-//#include <CGAL/bounding_box.h>
-//#include <iterator>
-//#include <fstream>
-//#include <CGAL/IO/write_off_points.h>
-//#include <CGAL/Surface_mesh.h>
-//#include <CGAL/Origin.h>
-//#include <filesystem>
 using namespace boxy;
 
 

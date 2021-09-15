@@ -4,7 +4,6 @@
 #include "gtest/gtest.h"
 #include "typedefs.h"
 #include "data.h"
-#include "filesystem"
 
 TEST (typdef_testing /*test suite name*/, Cgal2Eigen_Point3_Vector3f /*test name*/) {
     boxy::Point point{1,2,3};

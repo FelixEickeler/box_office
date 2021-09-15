@@ -34,12 +34,12 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
                 auto projection_plane = bbox.get_plane(current_face);
                 auto coordinate_system2D = bbox.get_plane_coordinates2D(current_face);
                 // ... rasterize !
-                Rasterizer<512> grid(mvbb::minmax2D(bbox, coordinate_system2D));
+                auto raster = Rasterizer::create_grid(bbox, coordinate_system2D, 512);
                 std::vector<Point2D> projected_2D;
                 for(auto& point : fas_node.points){
                     auto proj = projection_plane.projection(std::get<0>(point)); //project to plane (3D)
                     auto point2d = coordinate_system2D.project_onto_plane(proj); //project to plane (2D) & new coordinate system
-                    grid.insert(point2d);
+                    raster.insert(point2d);
                 }
 #if false
                 std::vector<Point> after_transform; // debug
@@ -63,12 +63,11 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
 
                     // go primary & secondary direction
 #endif
-                // TODO this is quickfix and needs to be changed, grid area ?
                 auto cell_depth = bbox.get_depth(current_face);
-                all_splits[face * 2 + 0] = grid.best_split<direction_ex>(cell_depth);
-                all_splits[face * 2 + 0].area /= grid.area();
-                all_splits[face * 2 + 1] = grid.best_split<direction_ey>(cell_depth);
-                all_splits[face * 2 + 1].area /= grid.area();
+                all_splits[face * 2 + 0] = raster.space.best_split<direction_ex>(cell_depth);
+                all_splits[face * 2 + 0].area /= raster.space.area();
+                all_splits[face * 2 + 1] = raster.space.best_split<direction_ey>(cell_depth);
+                all_splits[face * 2 + 1].area /= raster.space.area();
 #if false
                 for(auto i = 0; i < 2; ++i) {
                         auto cut = coordinate_system2D.project_to_global(all_splits[face * 2 + i].end_cut);
@@ -105,7 +104,7 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
 
             // create cutting plane
             Plane_3 projection_plane = bbox.get_plane(selected_face);
-            // save coordinate system in super structure ! This shouldd be omited as its only created for one call;
+            // save coordinate system in super structure ! This should be omitted as its only created for one call;
             auto coordinate_system2D = bbox.get_plane_coordinates2D(selected_face);
             auto p2 = coordinate_system2D.project_to_global(best_split->end_cut);
             auto o1 = coordinate_system2D.project_to_global(best_split->begin_cut);

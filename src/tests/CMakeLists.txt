@@ -19,15 +19,15 @@ include(GoogleTest)
 
 #setup test targets
 file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false *.h *.cpp)
-add_executable(valgrind_decompose valgrind_decompose_target.cpp )
-target_link_libraries(valgrind_decompose PRIVATE CGAL::CGAL CGAL::Eigen3_support spdlog::spdlog)
-target_include_directories(valgrind_decompose PUBLIC ../code)
-target_link_libraries(valgrind_decompose PUBLIC ${CMAKE_PROJECT_NAME}_lib )
-
-add_executable(minimal_example bbox_minimal.cpp)
-target_link_libraries(minimal_example PRIVATE CGAL::CGAL CGAL::Eigen3_support spdlog::spdlog)
-target_include_directories(minimal_example PUBLIC ../code)
-target_link_libraries(minimal_example PUBLIC ${CMAKE_PROJECT_NAME}_lib )
+#add_executable(valgrind_decompose valgrind_decompose_target.cpp )
+#target_link_libraries(valgrind_decompose PRIVATE CGAL::CGAL CGAL::Eigen3_support spdlog::spdlog)
+#target_include_directories(valgrind_decompose PUBLIC ../code)
+#target_link_libraries(valgrind_decompose PUBLIC ${CMAKE_PROJECT_NAME}_lib )
+#
+#add_executable(minimal_example bbox_minimal.cpp)
+#target_link_libraries(minimal_example PRIVATE CGAL::CGAL CGAL::Eigen3_support spdlog::spdlog)
+#target_include_directories(minimal_example PUBLIC ../code)
+#target_link_libraries(minimal_example PUBLIC ${CMAKE_PROJECT_NAME}_lib )
 
 #pybind11::module pybind11::lto pybind11::windows_extras
 
