@@ -14,6 +14,7 @@ endif()
 add_compile_definitions (CGAL_DISABLE_ROUNDING_MATH_CHECK=ON)
 # Setup foreign projects
 # pybind11 + Python Target
+MESSAGE(${PROJECT_SOURCE_DIR})
 add_subdirectory(../modules/pybind11 ./pybind_bin EXCLUDE_FROM_ALL)
 
 # CGal

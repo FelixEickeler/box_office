@@ -2,8 +2,10 @@ cmake_minimum_required(VERSION 3.5)
 
 if(NOT TARGET spdlog)
     # Stand-alone build
-    find_package(spdlog REQUIRED)
+    find_package(spdlog CONFIG REQUIRED)
 endif()
+
+
 
 # Setup targets
 # 1.) python taget
