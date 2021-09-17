@@ -27,24 +27,20 @@ std::array<float, 4> mvbb::minmax2D(const BBox &bbox, const CoordinateSystem2D &
 }
 
 size_t mvbb::Grid::raster() const {
-    return this->parent._raster;
+    return data.innerSize();
 }
 
-float mvbb::Grid::step_x() const {
-    return float(this->parent._scale[0]);
-}
-
-float mvbb::Grid::step_y() const {
-    return float(this->parent._scale[1]);
-}
-
-std::tuple<float, float> mvbb::Grid::step_sizes() const {
-    return {this->parent._scale[0], this->parent._scale[1]};
-}
-
-void mvbb::swap(mvbb::Grid &first, mvbb::Grid &second) {
-    std::swap(first.parent, second.parent);
-}
+//float mvbb::Grid::step_x() const {
+//    return float(this->parent._scale[0]);
+//}
+//
+//float mvbb::Grid::step_y() const {
+//    return float(this->parent._scale[1]);
+//}
+//
+//std::tuple<float, float> mvbb::Grid::step_sizes() const {
+//    return {this->parent._scale[0], this->parent._scale[1]};
+//}
 
 Point2D mvbb::Space::from_grid(const Point2D &grid_point) {
     return grid_point.cwiseProduct(parent._scale) + parent._shift;
@@ -56,10 +52,6 @@ Point2D mvbb::Space::from_grid(const Eigen::Matrix<uint32_t, 2, 1> &grid_point) 
 
 float mvbb::Space::area() const {
     return (parent._min_max[2] - parent._min_max[0]) * (parent._min_max[3] - parent._min_max[1]);
-}
-
-void mvbb::swap(mvbb::Space &first, mvbb::Space &second) {
-    std::swap(first.parent, second.parent);
 }
 
 mvbb::Rasterizer mvbb::Rasterizer::create_grid(std::array<float, 4> _min_max, long raster) {
@@ -76,15 +68,7 @@ mvbb::Rasterizer mvbb::Rasterizer::create_grid(BBox &bbox, const CoordinateSyste
 void mvbb::Rasterizer::insert(const Point2D &point2D) {
     const Vector2f compensate(0.5, 0.5);
     Eigen::Matrix<uint32_t, 2, 1> point_grid = ((point2D - _shift).cwiseQuotient(_scale) + compensate).cast<uint32_t>();
-    _data(point_grid.y(), point_grid.x()) += 1;
-}
-
-uint &mvbb::Rasterizer::get(uint32_t x, uint32_t y) {
-    return _data(y, x);
-}
-
-const MatrixXu &mvbb::Rasterizer::data() const {
-    return _data;
+    grid.data()(point_grid.y(), point_grid.x()) += 1;
 }
 
 mvbb::Rasterizer::Rasterizer(const mvbb::Rasterizer &obj) : _data(obj._data),

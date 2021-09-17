@@ -21,29 +21,23 @@ using namespace boxy;
 namespace mvbb {
     std::array<float, 4> minmax2D(const BBox& bbox, const CoordinateSystem2D& coordinate_system2D);
     class Rasterizer;
-    class Grid{
-        private:
-            std::reference_wrapper<Rasterizer>  parent;
 
-        public:
-            explicit Grid(Rasterizer& r): parent(r) {}
+    struct Grid{
+        MatrixXu data;
+        explicit Grid(long raster) : data(MatrixXu::Zero(raster, raster)){}
+        [[nodiscard]] size_t raster() const;
+        template<bool TDirection>
 
-            [[nodiscard]] size_t raster() const;
+        /// This method returns a vector of spans representing the occupied space of the grid.
+        /// It will be either provide these as column : direciton_x(false)  or row : direction_y(true) representations
+        /// \tparam TDirection :  true for row; false for column
+        /// \return Eigen::Vector2i<TRaster : v(n,0) start of the span and v(n,1) end of it
+        auto get_first_and_last_slot();
 
-            [[nodiscard]] float step_x() const;
 
-            [[nodiscard]] float step_y() const;
 
-            [[nodiscard]] std::tuple<float, float> step_sizes() const;
 
-            friend void swap(Grid& first, Grid& second);
 
-            /// This method returns a vector of spans representing the occupied space of the grid.
-            /// It will be either provide these as column : direciton_x(false)  or row : direction_y(true) representations
-            /// \tparam TDirection :  true for row; false for column
-            /// \return Eigen::Vector2i<TRaster : v(n,0) start of the span and v(n,1) end of it
-            template<bool TDirection>
-            auto get_first_and_last_slot();
 
             /// This method is calculating the splits on the grid of the rasterizer. It is not transformed in an overall coordinate system !
             /// \tparam TDirection :  true for row; false for column
@@ -62,6 +56,7 @@ namespace mvbb {
 //                    return true;
 //                }
     };
+
     class Space{
         private:
             std::reference_wrapper<Rasterizer>  parent;
@@ -84,10 +79,11 @@ namespace mvbb {
             template<bool TDirection>
             BestSplit best_split(float cell_depth = 1);
     };
+
     class Rasterizer {
         private:
 //            Eigen::Matrix<uint32_t , 512, 512> _data = Eigen::Matrix<uint32_t, 512,512>::Zero();//(TRaster, TRaster);
-            MatrixXu _data;
+
             long _raster;
             std::array<float, 4> _min_max;
             Vector2f _scale;
@@ -115,10 +111,18 @@ namespace mvbb {
 
         [[nodiscard]] uint &get(uint32_t x, uint32_t y);
 
+        // TODO Move to common
+        [[nodiscard]] float step_x() const;
+
+        [[nodiscard]] float step_y() const;
+
+        [[nodiscard]] std::tuple<float, float> step_sizes() const;
+
         /// Inserts point in the grid, it uses integer casting to determine the position. However the grid (inserted coordinate) is shifted by 0.5 to compensate.
         /// \param point2D
         void insert(const Point2D &point2D);
     };
+
     #include "rasterizer.ipp"
 }
 
