@@ -1,3 +1,5 @@
+cmake-build-debug
+cmake-build-release/
 src/cmake-build-debug
 src/cmake-build-release/
 src/pybin_bin
