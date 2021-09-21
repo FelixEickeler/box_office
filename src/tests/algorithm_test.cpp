@@ -187,7 +187,8 @@ TEST (algorithm_testing /*test suite name*/, min_split_2 /*test name*/) {
     using namespace mvbb;
     auto [rasterizer, _]  = GenerateRasterizer3x7();
     auto [ms_ex, ms_ey] = rasterizer.best_splits();
-    Vector2f ex_val;  ex_val << 3,0;
+    GridLine tx{{3,0},{3,2}};
+    GridLine ty{{0,0},{3,2}};
 //    EXPECT_TRUE(false) << "Check this, as the res increases from the grid used, but should be fine in continuous space !" ;
     Vector2f ey_val;  ey_val << 0,0.4;
     ASSERT_EQ(ms_ex.front().cut.start, ex_val);
