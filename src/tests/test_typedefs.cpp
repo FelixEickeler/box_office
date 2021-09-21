@@ -57,7 +57,7 @@ TEST (typdef_testing /*test suite name*/, CooridnateSystem2D_Project2Global/*tes
 
     for(auto i=0; i < test_points.size(); ++i){
         auto current_testpoint = system.project_to_global(test_points[i]);
-        ASSERT_TRUE(current_testpoint == result_points[i]) << "Diagnostics Point:" << i << "\t (" \
+        ASSERT_TRUE((current_testpoint-result_points[i]).squared_length() < 1e-10 ) << "Diagnostics Point:" << i << "\t (" \
         << result_points[i] << ") != (" << current_testpoint << ")";
     }
 }

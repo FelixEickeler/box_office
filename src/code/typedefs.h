@@ -25,6 +25,7 @@ namespace boxy{
     using Vector_3 = Kernel::Vector_3;
     using Vector3f = Eigen::Vector3d;
     using Vector2f = Eigen::Vector2d;
+    using Vector2i = Eigen::Matrix<uint32_t, 2, 1>;
     using Grid = Eigen::Matrix2Xf;
     using MatrixXu = Eigen::Matrix<uint32_t, Eigen::Dynamic, Eigen::Dynamic>;
     using VectorXu = Eigen::Matrix<uint32_t , Eigen::Dynamic, 1>;
@@ -208,17 +209,14 @@ namespace boxy{
         }
     };
 
-    struct BestGridSplit{
-        uint32_t area;
-        uint32_t index;
-    };
+    template <typename E>
+    constexpr auto to_underlying(E e) noexcept{
+        return static_cast<std::underlying_type_t<E>>(e);
+    }
 
-    struct BestSplit{
-        double area;
-        Vector2f begin_cut;
-        Vector2f end_cut;
-        Vector2f origin;
-    };
+
+
+
 }
 
 #endif //TEST_BIND_TYPEDEFS_H

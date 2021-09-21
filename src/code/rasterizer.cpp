@@ -3,109 +3,84 @@
 //
 
 #include "rasterizer.h"
-#include <algorithm>
 
-std::array<float, 4> mvbb::minmax2D(const BBox &bbox, const CoordinateSystem2D &coordinate_system2D) {
-    std::array<float, 4> min_max2D{1.0e10, -1.0e-10,1.0e-10,-1.0e-10};
-    for(auto& v : bbox.get_vertices()){
-        auto p2d = coordinate_system2D.project_onto_plane(v);
-        auto x = p2d.x(); auto y = p2d.y();
-        if(x < min_max2D[0]){
-            min_max2D[0] = x;
-        }
-        else if(x > min_max2D[2]){
-            min_max2D[2] = x;
-        }
-        if(y < min_max2D[1]){
-            min_max2D[1] = y;
-        }
-        else if(y > min_max2D[3]){
-            min_max2D[3] = y;
-        }
-    }
-    return min_max2D;
+Point2D mvbb::Discretization::grid2space(const Point2D &grid_point) const{
+    return grid_point.cwiseProduct(_scale) + _shift;
 }
 
-size_t mvbb::Grid::raster() const {
-    return data.innerSize();
+Point2D mvbb::Discretization::grid2space(const Eigen::Matrix<uint32_t, 2, 1> &grid_point) const{
+    return grid_point.cast<double>().cwiseProduct(_scale) + _shift;
 }
 
-//float mvbb::Grid::step_x() const {
-//    return float(this->parent._scale[0]);
-//}
-//
-//float mvbb::Grid::step_y() const {
-//    return float(this->parent._scale[1]);
-//}
-//
-//std::tuple<float, float> mvbb::Grid::step_sizes() const {
-//    return {this->parent._scale[0], this->parent._scale[1]};
-//}
-
-Point2D mvbb::Space::from_grid(const Point2D &grid_point) {
-    return grid_point.cwiseProduct(parent._scale) + parent._shift;
+mvbb::ProjectedLine mvbb::Discretization::grid2space(const GridLine &grid_line) const {
+    return ProjectedLine{grid2space(grid_line.start), grid2space(grid_line.end)};
 }
 
-Point2D mvbb::Space::from_grid(const Eigen::Matrix<uint32_t, 2, 1> &grid_point) {
-    return grid_point.cast<double>().cwiseProduct(parent._scale) + parent._shift;
+float mvbb::Discretization::area() const {
+    return (_min_max[2] - _min_max[0]) * (_min_max[3] - _min_max[1]);
 }
 
-float mvbb::Space::area() const {
-    return (parent._min_max[2] - parent._min_max[0]) * (parent._min_max[3] - parent._min_max[1]);
-}
-
-mvbb::Rasterizer mvbb::Rasterizer::create_grid(std::array<float, 4> _min_max, long raster) {
-    auto rasterizer =  Rasterizer(_min_max, raster);
+mvbb::Discretization mvbb::Discretization::create_discretization(SplitStrategy& split_strategy, std::array<float, 4> _min_max, long raster){
+    auto rasterizer =  Discretization(split_strategy, _min_max, raster);
     return rasterizer;
 }
 
-mvbb::Rasterizer mvbb::Rasterizer::create_grid(BBox &bbox, const CoordinateSystem2D &coordinate_system2D, long raster) {
+mvbb::Discretization mvbb::Discretization::create_discretization(SplitStrategy& split_strategy, BBox &bbox, const CoordinateSystem2D &coordinate_system2D, long raster){
     auto _min_max = minmax2D(bbox, coordinate_system2D);
-    auto rasterizer =  Rasterizer(_min_max, raster);
+    auto rasterizer =  Discretization(split_strategy, _min_max, raster);
     return rasterizer;
 }
 
-void mvbb::Rasterizer::insert(const Point2D &point2D) {
+void mvbb::Discretization::insert(const Point2D &point2D) {
     const Vector2f compensate(0.5, 0.5);
     Eigen::Matrix<uint32_t, 2, 1> point_grid = ((point2D - _shift).cwiseQuotient(_scale) + compensate).cast<uint32_t>();
-    grid.data()(point_grid.y(), point_grid.x()) += 1;
+    _grid.data(point_grid.y(), point_grid.x()) += 1;
 }
 
-mvbb::Rasterizer::Rasterizer(const mvbb::Rasterizer &obj) : _data(obj._data),
-                _raster(obj._raster),
-                _min_max{obj._min_max},
-                _scale(obj._scale),
-                _shift(obj._shift),
-                grid(*this), space(*this) {}
-
-mvbb::Rasterizer::Rasterizer(std::array<float, 4> min_max, long raster) :  _data(MatrixXu::Zero(raster, raster)),
-                                                                           _raster(raster),
+mvbb::Discretization::Discretization(SplitStrategy& splitStrategy, std::array<float, 4> min_max, long raster) :  _grid(raster), _split_strategy(splitStrategy),
                                                                            _min_max{min_max},
                                                                            _scale((_min_max[2] - _min_max[0]) / float(raster - 1),
                                                                                   (_min_max[3] - _min_max[1]) / float(raster - 1)),
-                                                                           _shift(min_max[0], min_max[1]),
-                                                                           grid(*this), space(*this) {}
+                                                                           _shift(min_max[0], min_max[1]) {}
 
-mvbb::Rasterizer &mvbb::Rasterizer::operator=(mvbb::Rasterizer &other) {
-    if (this != &other) {
-        swap(*this, other);
-    }
-    return *this;
+float mvbb::Discretization::step_x() const {
+    return _scale[0];
 }
 
-void mvbb::swap(Rasterizer &first, Rasterizer &second) {
-        using std::swap;
-        swap(first._data, first._data);
-        swap(first._raster, first._raster);
-        swap(first._min_max, first._min_max);
-        swap(first._scale, second._scale);
-        swap(first._shift, second._shift);
-        swap(first.grid, second.grid);
-        swap(first.space, second.space);
+float mvbb::Discretization::step_y() const {
+    return _scale[1];
 }
 
+std::tuple<float, float> mvbb::Discretization::step_sizes() const {
+    return {_scale[0], _scale[1]};
+}
 
+mvbb::XY_Grid& mvbb::Discretization::Grid() {
+    return _grid;
+}
 
+mvbb::SpaceProxy mvbb::Discretization::Space() const {
+    return SpaceProxy{std::bind(&Discretization::step_x, this),
+                      std::bind(&Discretization::step_y, this),
+                      std::bind(&Discretization::step_sizes, this)};
+}
 
+mvbb::ProjectedSplits mvbb::Discretization::best_splits()  const{
+    ProjectedSplits projected_splits;
+    // calculate all the splits with the given strategy
+    auto best_grid_splits = _split_strategy.calculate_best_splits(_grid);
+    double cell_area = step_x() * step_y();
+    Vector2f origin = grid2space(Point2D(0, 0));
 
-//
+   for(const auto& orientation : GridOrientationEnumerator){
+       for(const auto& os : best_grid_splits[orientation]){
+           projected_splits[orientation].emplace_back(
+                   grid2space(os.cut),
+                   origin,
+                   os.area * cell_area,
+                   os.orientation);
+       }
+   }
+    return projected_splits;
+}
+

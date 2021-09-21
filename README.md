@@ -78,5 +78,27 @@ Do not forget to shutdown the docker after use with docker-compose down
 * loader and dataprocessing tests in python ?!?
 * cgal work around (memory leak)
 * clean up cmake + install
- 
+* ADD LICENSE
+
+##License
+    Copyright (c) 2021 Felix Eickeler, Florian Noichl
+    see ./LICENSE
+
+###Third party software 
+    google test
+    Copyright 2008, Google Inc.
+    License: see ./modules/googletest
+
+    pybind11
+    Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>
+    License:  see ./modules/pybind11
+
+    spdlog
+    Copyright (c) 2016 Gabi Melman.
+    License: MIT
+
+    static_enum
+    Copyright (c) 2019 konanM
+    License: MIT
+
 

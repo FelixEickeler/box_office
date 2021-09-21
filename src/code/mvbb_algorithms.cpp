@@ -4,7 +4,7 @@
 #include <spdlog/spdlog.h>
 #include "spdlog/stopwatch.h"
 #include "mvbb_algorithms.h"
-#include "FitAndSplitHierarchy.h"
+#include "SplitStrategies.h"
 
 using namespace mvbb;
 
@@ -25,7 +25,7 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
 
         for(auto& fas_node : tree.getNodes(depth)) {   //std::for_each(all_parents.begin(), all_parents.end(), [&tree, bbox_algorithm, depth, &node_counter](auto& fas_node){
             auto bbox = fas_node.bounding_box;
-            std::array<BestSplit, 6> all_splits;
+            BoxSplits best_bbox_splits;
             // A=0; B=1; C=2 => see typdef::BoxFaces;
             // calculate each split for evey direction on evey face 3 faces x 2
             for (auto face = 0; face < 3; ++face) {
@@ -34,7 +34,9 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
                 auto projection_plane = bbox.get_plane(current_face);
                 auto coordinate_system2D = bbox.get_plane_coordinates2D(current_face);
                 // ... rasterize !
-                auto raster = Rasterizer::create_grid(bbox, coordinate_system2D, 512);
+
+                TwoSplitStrategy twoSplitStrategy;
+                auto raster = Discretization::create_discretization(twoSplitStrategy, bbox, coordinate_system2D, 512);
                 std::vector<Point2D> projected_2D;
                 for(auto& point : fas_node.points){
                     auto proj = projection_plane.projection(std::get<0>(point)); //project to plane (3D)
@@ -64,10 +66,7 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
                     // go primary & secondary direction
 #endif
                 auto cell_depth = bbox.get_depth(current_face);
-                all_splits[face * 2 + 0] = raster.space.best_split<direction_ex>(cell_depth);
-                all_splits[face * 2 + 0].area /= raster.space.area();
-                all_splits[face * 2 + 1] = raster.space.best_split<direction_ey>(cell_depth);
-                all_splits[face * 2 + 1].area /= raster.space.area();
+                best_bbox_splits[current_face] = raster.best_splits();
 #if false
                 for(auto i = 0; i < 2; ++i) {
                         auto cut = coordinate_system2D.project_to_global(all_splits[face * 2 + i].end_cut);
@@ -94,24 +93,20 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
 #endif
             }
 
-            // select_best_split
-            auto best_split = std::min_element(all_splits.begin(), all_splits.end(),
-                                               [](const auto &a, const auto &b) {
-                                                   return a.area < b.area;
-                                               });
-
-            auto selected_face = static_cast<BoxFaces>(std::distance(all_splits.begin(), best_split) / 2);
-
+            // select_best_split & get the face its on
+            auto [best_split, selected_face] = best_bbox_splits.superior_split();
             // create cutting plane
             Plane_3 projection_plane = bbox.get_plane(selected_face);
             // save coordinate system in super structure ! This should be omitted as its only created for one call;
+
             auto coordinate_system2D = bbox.get_plane_coordinates2D(selected_face);
-            auto p2 = coordinate_system2D.project_to_global(best_split->end_cut);
-            auto o1 = coordinate_system2D.project_to_global(best_split->begin_cut);
-            auto p1 = coordinate_system2D.project_to_global(best_split->origin);
+            auto p2 = coordinate_system2D.project_to_global(best_split.cut.end);
+            auto o1 = coordinate_system2D.project_to_global(best_split.cut.start);
+            auto p1 = coordinate_system2D.project_to_global(best_split.origin);
             auto orthogal_vector = CGAL::cross_product(p1 - o1, p2 - o1);
             Plane_3 cutting_plane(o1, p2, o1 + orthogal_vector);
-            auto[plane_mesh, plane_system] = Plane2Mesh(o1, p1, p2, std::distance(all_splits.begin(), best_split) % 2);
+            // TODO: Check if orienation makes sense with ::Y ?
+            auto[plane_mesh, plane_system] = Plane2Mesh(o1, p1, p2, best_split.orientation == GridOrientation::Y);
 
             // write final plane to .off
 #ifdef false

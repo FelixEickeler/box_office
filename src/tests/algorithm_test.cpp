@@ -4,15 +4,12 @@
 
 #include "gtest/gtest.h"
 #include "mvbb_algorithms.h"
-#include <algorithm>
 #include "typedefs.h"
 #include <CGAL/Polygon_mesh_processing/IO/polygon_mesh_io.h>
-#include <CGAL/Surface_mesh.h>
-#include <CGAL/IO/write_off_points.h>
 #include "data.h"
 #include "rasterizer.h"
-#include <string>
-#include <iterator>
+
+TwoSplitStrategy two_split;
 
 //TEST (algorithm_testing /*test suite name*/, FitAndSplitHirachy /*test name*/) {
 //    {
@@ -64,8 +61,9 @@
 TEST (algorithm_testing /*test suite name*/, Rasterizer_StepSize /*test name*/) {
     using namespace mvbb;
     std::array<float,4> min_max = {0,0, 2, 2 * float(sqrt(2))};
-    Rasterizer rasterizer(min_max, 256);
-    auto [step_x, step_y] = rasterizer.grid.step_sizes();
+    TwoSplitStrategy two_split;
+    Discretization rasterizer(two_split, min_max, 256);
+    auto [step_x, step_y] = rasterizer.step_sizes();
     ASSERT_FLOAT_EQ(step_x, 0.0078431372549019607843137254902);
     ASSERT_FLOAT_EQ(step_y, 0.01109187107743603959844461744478);
 }
@@ -74,12 +72,13 @@ TEST (algorithm_testing /*test suite name*/, Rasterizer_Insert /*test name*/) {
     using namespace mvbb;
     auto plane_points = Get_Points_on_Plane();
     std::array<float,4> min_max = {0,0, 2, 2 * float(sqrt(2))};
-    Rasterizer rasterizer(min_max, 3);
+    TwoSplitStrategy two_split;
+    Discretization rasterizer(two_split, min_max, 3);
     for(auto& p2d : plane_points){
         rasterizer.insert(p2d);
     }
     auto verity_matrix = Eigen::Matrix<uint32_t, 3, 3>::Ones();
-    ASSERT_EQ(verity_matrix, rasterizer.data());
+    ASSERT_EQ(verity_matrix, rasterizer.Grid().data);
 }
 
 
@@ -90,7 +89,7 @@ TEST (algorithm_testing /*test suite name*/, Rasterizer_Insert /*test name*/) {
 *  x   x    x  | 0,2
 * 0,2  1,2  2,2
  */
-std::tuple<mvbb::Rasterizer, std::vector<Point2D>> GenerateRasterizer3x3(){
+std::tuple<mvbb::Discretization, std::vector<Point2D>> GenerateRasterizer3x3(){
 
     using namespace mvbb;
     auto arrp = Get_Points_on_Plane();
@@ -100,7 +99,7 @@ std::tuple<mvbb::Rasterizer, std::vector<Point2D>> GenerateRasterizer3x3(){
     plane_points.erase(plane_points.cbegin() + 2);
     plane_points.erase(plane_points.cbegin() + 1);
     std::array<float,4> min_max = {0,0, 2, 2 * float(sqrt(2))};
-    Rasterizer rasterizer(min_max, 3);
+    Discretization rasterizer(two_split, min_max, 3);
     for(auto& p2d : plane_points){
         rasterizer.insert(p2d);
     }
@@ -109,26 +108,25 @@ std::tuple<mvbb::Rasterizer, std::vector<Point2D>> GenerateRasterizer3x3(){
 
 TEST (algorithm_testing /*test suite name*/, get_first_and_last_slot /*test name*/) {
     auto [rasterizer, _] = GenerateRasterizer3x3();
-    EXPECT_TRUE(false) << rasterizer.grid.raster() << "\n";
-    auto res_x = rasterizer.grid.get_first_and_last_slot<direction_ex>();
-    EXPECT_TRUE(false) << rasterizer.grid.raster() << "\n";
-    const auto test_points_x = (MatrixXu(2,3) <<  0, 1, 2, 3, 3, 3).finished();
-    EXPECT_TRUE(false) << rasterizer.grid.raster() << "\n";
+//    EXPECT_TRUE(false) << rasterizer.Grid().raster() << "\n";
+    auto res_x = rasterizer.Grid().get_first_and_last_slot<GridOrientation::X>();
+//    EXPECT_TRUE(false) << rasterizer.Grid().raster() << "\n";
+    const auto test_points_x = (MatrixXu(2,3) <<  0, 1, 2, 3, 3, 3).finished(); // first 3 min, last 3 max
+//    EXPECT_TRUE(false) << rasterizer.Grid().raster() << "\n";
     ASSERT_EQ(test_points_x, res_x);
 
 
     const auto test_points_y = (MatrixXu(2,3) <<  0, 1, 0, 1, 2, 3).finished();
-    auto res_y = rasterizer.grid.get_first_and_last_slot<direction_ey>();
+    auto res_y = rasterizer.Grid().get_first_and_last_slot<GridOrientation::Y>();
     ASSERT_EQ(test_points_y, res_y);
 }
 
 
 TEST (algorithm_testing /*test suite name*/, best_split_rasterized /*test name*/) {
     auto [rasterizer, _] = GenerateRasterizer3x3();
-    auto msr_ex = rasterizer.grid.best_split<direction_ex>();
-    auto msr_ey = rasterizer.grid.best_split<direction_ey>();
-    ASSERT_EQ(msr_ex.index, 0);
-    ASSERT_EQ(msr_ey.index, 0);
+    auto [msr_ex, msr_ey] = two_split.calculate_best_splits(rasterizer.Grid());
+    ASSERT_EQ(msr_ex.front().index, 0);
+    ASSERT_EQ(msr_ey.front().index, 0);
 }
 
 
@@ -141,13 +139,14 @@ TEST (algorithm_testing /*test suite name*/, best_split_rasterized /*test name*/
  *  Expected: true
  *   1 1 1 1 1 0
  *   0 0 0 0 0 0
- *   0 0 0 0 0 0
  *   0 0 0 1 1 1
+ *   0 0 0 0 0 0
  *   0 0 0 0 0 0
  *   0 0 0 1 1 1
  *
  */
-std::tuple<mvbb::Rasterizer, std::vector<Point2D>> GenerateRasterizer3x7(){
+
+std::tuple<mvbb::Discretization, std::vector<Point2D>> GenerateRasterizer3x7(){
     using namespace mvbb;
     std::vector<Point2D> more_test_points = {{
             {1,0}, {2,0}, {3,0}, {4,0}, {5,0},
@@ -155,7 +154,7 @@ std::tuple<mvbb::Rasterizer, std::vector<Point2D>> GenerateRasterizer3x7(){
             {4,2}, {5,2}, {6,2},
     }};
     std::array<float,4> min_max = {1,0, 6, 2};
-    Rasterizer rasterizer(min_max, 6);
+    Discretization rasterizer(two_split, min_max, 6);
     for(auto& p2d : more_test_points){
         rasterizer.insert(p2d);
     }
@@ -164,11 +163,11 @@ std::tuple<mvbb::Rasterizer, std::vector<Point2D>> GenerateRasterizer3x7(){
 
 TEST (algorithm_testing /*test suite name*/, get_first_and_last_slot2 /*test name*/) {
     auto [rasterizer, _] = GenerateRasterizer3x7();
-    const auto test_points_x = (MatrixXu(2,6) <<  0, 0, 0, 0, 0, 3, 1,1,1,6,6,6).finished();
-    auto res_x = rasterizer.grid.get_first_and_last_slot<direction_ex>();
+    const auto test_points_x = (MatrixXu(2,6) <<  0, 0, 0, 0, 0, 2, 1,1,1,6,6,6).finished();
+    auto res_x = rasterizer.Grid().get_first_and_last_slot<GridOrientation::X>();
     ASSERT_EQ(test_points_x, res_x);
-    const auto test_points_y = (MatrixXu(2,6) <<  0, 0, 0, 3, 0, 3, 5,0,0,6,0,6).finished();
-    auto res_y = rasterizer.grid.get_first_and_last_slot<direction_ey>();
+    const auto test_points_y = (MatrixXu(2,6) <<  0, 0, 3, 0, 0, 3, 5,0,6,0,0,6).finished();
+    auto res_y = rasterizer.Grid().get_first_and_last_slot<GridOrientation::Y>();
     ASSERT_EQ(test_points_y, res_y);
 }
 
@@ -176,27 +175,25 @@ TEST (algorithm_testing /*test suite name*/, get_first_and_last_slot2 /*test nam
 TEST (algorithm_testing /*test suite name*/, min_split_rasterized2 /*test name*/) {
     using namespace mvbb;
     auto [rasterizer, _]  = GenerateRasterizer3x7();
-    auto msr_ex = rasterizer.grid.best_split<direction_ex>();
-    auto msr_ey = rasterizer.grid.best_split<direction_ey>();
-    ASSERT_EQ(msr_ex.index, 2);
-    ASSERT_EQ(msr_ex.area, 21);
-    ASSERT_EQ(msr_ey.index, 0);
-    ASSERT_EQ(msr_ey.area, 20);
+    auto [msr_ex, msr_ey] = two_split.calculate_best_splits(rasterizer.Grid());
+    ASSERT_EQ(msr_ex.front().index, 2);
+    ASSERT_EQ(msr_ex.front().area, 21);
+    ASSERT_EQ(msr_ey.front().index, 0);
+    ASSERT_EQ(msr_ey.front().area, 20);
 }
 
 /// Translate back to 3x7 grid;
 TEST (algorithm_testing /*test suite name*/, min_split_2 /*test name*/) {
     using namespace mvbb;
     auto [rasterizer, _]  = GenerateRasterizer3x7();
-    auto ms_ex = rasterizer.space.best_split<direction_ex>();
-    auto ms_ey = rasterizer.space.best_split<direction_ey>();
+    auto [ms_ex, ms_ey] = rasterizer.best_splits();
     Vector2f ex_val;  ex_val << 3,0;
 //    EXPECT_TRUE(false) << "Check this, as the res increases from the grid used, but should be fine in continuous space !" ;
     Vector2f ey_val;  ey_val << 0,0.4;
-    ASSERT_EQ(ms_ex.begin_cut, ex_val);
-    ASSERT_FLOAT_EQ(ms_ex.area, 8.4);
-    ASSERT_EQ(ms_ey.begin_cut, ey_val);
-    ASSERT_FLOAT_EQ(ms_ey.area, 8);
+    ASSERT_EQ(ms_ex.front().cut.start, ex_val);
+    ASSERT_FLOAT_EQ(ms_ex.front().area, 8.4);
+    ASSERT_EQ(ms_ey.front().cut.start, ey_val);
+    ASSERT_FLOAT_EQ(ms_ey.front().area, 8);
 }
 
 TEST (algorithm_testing /*test suite name*/, Algo_MVBB/*test name*/) {
