@@ -32,15 +32,14 @@ namespace mvbb {
         private:
             XY_Grid _grid;
             SplitStrategy& _split_strategy;
-            std::array<float, 4> _min_max;
+            MinMax2f _min_max;
             Vector2f _scale;
             Vector2f _shift;
 
         public:
-            static Discretization create_discretization(SplitStrategy& split_strategy, std::array<float, 4> _min_max, long raster=512);
+            static Discretization create_discretization(SplitStrategy& split_strategy, MinMax2f _min_max, long raster=512);
             static Discretization create_discretization(SplitStrategy& split_strategy, BBox& bbox, const CoordinateSystem2D& coordinate_system2D, long raster=512);
-            explicit Discretization(SplitStrategy& splitStrategy, std::array<float, 4> min_max, long raster);
-
+            explicit Discretization(SplitStrategy& splitStrategy, MinMax2f min_max, long raster);
             [[nodiscard]] float step_y() const;
             [[nodiscard]] float step_x() const;
             [[nodiscard]] std::tuple<float, float> step_sizes() const;
@@ -53,7 +52,8 @@ namespace mvbb {
             XY_Grid& Grid();
             [[nodiscard]] SpaceProxy Space() const;
 
-            /// Inserts point in the grid, it uses integer casting to determine the position. However the grid (inserted coordinate) is shifted by 0.5 to compensate.
+            /// Inserts point in the grid, it uses integer casting to determine the position.
+            /// However the grid (inserted coordinate) is shifted by 0.5 to compensate. <= not to sure
             /// \param point2D
             void insert(const Point2D &point2D);
     };

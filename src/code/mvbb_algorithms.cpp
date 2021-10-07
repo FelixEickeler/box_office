@@ -8,8 +8,9 @@
 
 using namespace mvbb;
 
-FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3D, Algo_Base<TPointCloudType> *const bbox_algorithm, uint32_t kappa, float gain_threshold) {
-    spdlog::trace("Processing: {} Points, with {} kappa", points3D.size(), kappa);
+
+FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3D, Algo_Base<TPointCloudType> *const bbox_algorithm, Target_Setting const target_settings) {
+    spdlog::trace("Processing: {} Points, with {} kappa", points3D.size(),  target_settings.kappa);
     spdlog::set_pattern("\t[%^%l%$][%S,%es] %v");
     spdlog::stopwatch sw;
 
@@ -17,11 +18,11 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
     FitAndSplitHierarchy<TPointCloudType> tree;
     tree.emplace_back(0, initial_bbox, points3D.begin(), points3D.end());
 
-    for(auto depth=0; depth<kappa; ++depth){
+    for(auto depth=0; depth< target_settings.kappa; ++depth){
         int node_counter = 0;
         if(tree.depth() <= depth) break;
         auto current_hierarchy_volume = tree.current_hierarchy_volume();
-        spdlog::debug("Decomposing level: {0} with {1} max gain and a hierarchy volume {2}", depth, gain_threshold, current_hierarchy_volume / initial_bbox.volume());
+        spdlog::debug("Decomposing level: {0} with {1} max gain and a hierarchy volume {2}", depth, target_settings.gain_threshold, current_hierarchy_volume / initial_bbox.volume());
 
         for(auto& fas_node : tree.getNodes(depth)) {   //std::for_each(all_parents.begin(), all_parents.end(), [&tree, bbox_algorithm, depth, &node_counter](auto& fas_node){
             auto bbox = fas_node.bounding_box;
@@ -136,15 +137,15 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
             // Reject if gain or points are not enough
             std::string status = "rejected";
             float gain = -1;
-            if(vector_bbox1.size() > 10 && vector_bbox1.size() > 10) {
+            if(vector_bbox1.size() > target_settings.minimum_point_per_box && vector_bbox2.size() > target_settings.minimum_point_per_box) {
                 spdlog::debug("First Box: {}", vector_bbox1.size());
                 bbox1 = bbox_algorithm->fit_bounding_box(vector_bbox1);
 
-                spdlog::debug("Second Box: {}", vector_bbox1.size());
+                spdlog::debug("Second Box: {}", vector_bbox2.size());
                 bbox2 = bbox_algorithm->fit_bounding_box(vector_bbox2);
                 gain = (current_hierarchy_volume - fas_node.bounding_box.volume() + bbox1.volume() + bbox2.volume()) / current_hierarchy_volume;
                 //calculate gain
-                if(gain < gain_threshold && bbox2.volume() > initial_bbox.volume()/1000 && bbox2.volume() > initial_bbox.volume() / 1000){
+                if(gain < target_settings.gain_threshold && bbox2.volume() > initial_bbox.volume() / target_settings.minimal_initial_volume_divider && bbox2.volume() > initial_bbox.volume() / target_settings.minimal_initial_volume_divider){
                     tree.emplace_back(depth+1, bbox1, fas_node.points.begin(), second_bbox_begins_at);
                     tree.emplace_back(depth+1, bbox2, second_bbox_begins_at, fas_node.points.end());
                     status = "accepted";
@@ -172,3 +173,7 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
     spdlog::set_pattern("%+");
     return tree;
 }
+
+Target_Setting::Target_Setting(uint32_t kappa_, float gain_threshold_, uint32_t minimum_point_per_box_,
+                               uint32_t minimal_initial_volume_divider_) :
+        kappa(kappa_), gain_threshold(gain_threshold_), minimum_point_per_box(minimum_point_per_box_), minimal_initial_volume_divider(minimal_initial_volume_divider_){}

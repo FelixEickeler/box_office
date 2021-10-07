@@ -37,15 +37,21 @@ auto mvbb::XY_Grid::get_first_and_last_slot() const{
     return _span;
 }
 
+// This is a line in between the indexed cell and the next one, which makes the indexing very complicated.
+// Think of an overlayed grid that is shifted in contrast to the grid cells. In true coordinates this would be shifted by 0.5
+// In our case the line is still drawn in a cell space and the index must be converted to a integer (after cell) coordinate
+// 0 => after the first cell => 1 cell spacing, 1 => after the second cell => 2 cell spacing, ...
+// So a line represents a true cordinates in the cell space !
 template<GridOrientation TDirection>
 auto mvbb::XY_Grid::index2line(uint32_t index) const{
     GridLine line;
+    index++;
     if constexpr (TDirection == GridOrientation::Y) {
         line.start << 0, index;
-        line.end << raster() - 1, index;
+        line.end << raster(), index;
     } else {
         line.start << index, 0;
-        line.end << index, raster() - 1;
+        line.end << index, raster();
     }
     return line;
 }

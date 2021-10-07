@@ -5,7 +5,7 @@
 #include "typedefs.h"
 #include "data.h"
 
-TEST (typdef_testing /*test suite name*/, Cgal2Eigen_Point3_Vector3f /*test name*/) {
+TEST (TypeDefinitions_CastingAndConversion , Cgal2Eigen_Point3_Vector3f ) {
     boxy::Point point{1,2,3};
     auto eigen_vector = boxy::cgal_to_eigen(point);
     ASSERT_EQ(eigen_vector.x(), point.x());
@@ -13,7 +13,7 @@ TEST (typdef_testing /*test suite name*/, Cgal2Eigen_Point3_Vector3f /*test name
     ASSERT_EQ(eigen_vector.x(), point.x());
 }
 
-TEST (typdef_testing /*test suite name*/, Cgal2Eigen_Vector3_Vector3f /*test name*/) {
+TEST (TypeDefinitions_CastingAndConversion , Cgal2Eigen_Vector3_Vector3f ) {
     boxy::Vector_3 cgal_vector{1,2,3};
     auto eigen_vector = boxy::cgal_to_eigen(cgal_vector);
     ASSERT_EQ(eigen_vector.x(), cgal_vector.x());
@@ -21,7 +21,7 @@ TEST (typdef_testing /*test suite name*/, Cgal2Eigen_Vector3_Vector3f /*test nam
     ASSERT_EQ(eigen_vector.x(), cgal_vector.x());
 }
 
-TEST (typdef_testing /*test suite name*/, Eigen2Cgal_Vector3f_Vector3 /*test name*/) {
+TEST (TypeDefinitions_CastingAndConversion , Eigen2Cgal_Vector3f_Vector3 ) {
     boxy::Vector3f eigen_vector{1,2,3};
     auto cgal_vector = boxy::eigen_to_cgal(eigen_vector);
     ASSERT_EQ(eigen_vector.x(), cgal_vector.x());
@@ -30,7 +30,7 @@ TEST (typdef_testing /*test suite name*/, Eigen2Cgal_Vector3f_Vector3 /*test nam
 }
 
 
-TEST (typdef_testing /*test suite name*/, CooridnateSystem2D_Project2Plane /*test name*/) {
+TEST (CooridnateSystem2D , ProjectOntoPlane_TestPoints_CorrectPlaneCordinates ) {
     // Suqare cut edges
     using namespace boxy;
     CoordinateSystem2D system{
@@ -46,7 +46,7 @@ TEST (typdef_testing /*test suite name*/, CooridnateSystem2D_Project2Plane /*tes
     }
 }
 
-TEST (typdef_testing /*test suite name*/, CooridnateSystem2D_Project2Global/*test name*/) {
+TEST (CooridnateSystem2D , CooridnateSystem2D_Project2Global_CorrectPointCordinatesInSpace) {
     // Suqare cut edges
     using namespace boxy;
     CoordinateSystem2D system{
@@ -63,7 +63,7 @@ TEST (typdef_testing /*test suite name*/, CooridnateSystem2D_Project2Global/*tes
 }
 
 
-TEST (typdef_testing /*test suite name*/, BBOX_get_plane_allFaces/*test name*/) {
+TEST (BBox , GetPlane_CubePoints_AllPlanesDefinedCorrectly) {
 
     auto cube_points = Get_CubePoints();
     boxy::BBox bbox(cube_points);
@@ -83,7 +83,7 @@ TEST (typdef_testing /*test suite name*/, BBOX_get_plane_allFaces/*test name*/) 
     ASSERT_EQ(bbox.get_plane(boxy::BoxFaces::F), F);
 }
 
-TEST (typdef_testing /*test suite name*/, BBOX_minMax/*test name*/) {
+TEST (BBox , MinMax_CubePoints_CorrectXYZAlignedBoundaries) {
     auto cube_points = Get_CubePoints();
     boxy::BBox bbox(cube_points);
 
@@ -96,7 +96,7 @@ TEST (typdef_testing /*test suite name*/, BBOX_minMax/*test name*/) {
     ASSERT_EQ(min_max[5], 1);
 }
 
-TEST (typdef_testing /*test suite name*/, crange/*test name*/) {
+TEST (TypeDefinitions_Ranges, VectorView_CubePoints_SameAdress) {
     boxy::pointcloud_xyzc pc;
     for(auto p : Get_CubePoints()){
         pc.push_back(std::make_tuple(p,0));

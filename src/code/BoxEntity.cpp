@@ -7,7 +7,8 @@
 std::vector<FitAndSplitNode<pointcloud_xyzc>> BoxEntity::decompose(int depth, float gain_threshold) {
     if(decomposition_level < depth || used_gain != gain_threshold) {
         mvbb::CGAL_MVBB<pointcloud_xyzc> cgal_min_volumne;
-        this->tree_hierarchy = mvbb::decompose3D(this->points, &cgal_min_volumne, depth, gain_threshold);
+        auto target = mvbb::Target_Setting(depth, gain_threshold);
+        this->tree_hierarchy = mvbb::decompose3D(this->points, &cgal_min_volumne, target);
         decomposition_level = depth;
         used_gain = gain_threshold;
         return this->tree_hierarchy.get_finalized();

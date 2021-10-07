@@ -7,7 +7,7 @@
 #include <array>
 
 
-TEST (helper_testing /*test suite name*/, take_first_n_1to10 /*test name*/) {
+TEST (Input /*test suite name*/, TakeFirstN_1to10_CorrectWords /*test name*/) {
     auto test_string = "The red-bellied black snake (Pseudechis-porphyriacus) is a species of elapid snake native to Australia";
     std::array<std::string, 14> result = {
             "The", "red-bellied", "black", "snake", "(Pseudechis-porphyriacus)", "is", "a", "species", "of", "elapid",

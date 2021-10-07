@@ -20,7 +20,7 @@ float mvbb::Discretization::area() const {
     return (_min_max[2] - _min_max[0]) * (_min_max[3] - _min_max[1]);
 }
 
-mvbb::Discretization mvbb::Discretization::create_discretization(SplitStrategy& split_strategy, std::array<float, 4> _min_max, long raster){
+mvbb::Discretization mvbb::Discretization::create_discretization(SplitStrategy& split_strategy, MinMax2f _min_max, long raster){
     auto rasterizer =  Discretization(split_strategy, _min_max, raster);
     return rasterizer;
 }
@@ -32,15 +32,15 @@ mvbb::Discretization mvbb::Discretization::create_discretization(SplitStrategy& 
 }
 
 void mvbb::Discretization::insert(const Point2D &point2D) {
-    const Vector2f compensate(0.5, 0.5);
-    Eigen::Matrix<uint32_t, 2, 1> point_grid = ((point2D - _shift).cwiseQuotient(_scale) + compensate).cast<uint32_t>();
+   auto point_grid = ((point2D - _shift).cwiseQuotient(_scale)).cast<uint32_t>();
     _grid.data(point_grid.y(), point_grid.x()) += 1;
 }
 
-mvbb::Discretization::Discretization(SplitStrategy& splitStrategy, std::array<float, 4> min_max, long raster) :  _grid(raster), _split_strategy(splitStrategy),
-                                                                           _min_max{min_max},
-                                                                           _scale((_min_max[2] - _min_max[0]) / float(raster - 1),
-                                                                                  (_min_max[3] - _min_max[1]) / float(raster - 1)),
+
+mvbb::Discretization::Discretization(SplitStrategy& splitStrategy, MinMax2f min_max, long raster) :  _grid(raster), _split_strategy(splitStrategy),
+                                                                           _min_max{extend_boundaries(min_max)},
+                                                                           _scale((_min_max[2] - _min_max[0]) / float(raster),
+                                                                                  (_min_max[3] - _min_max[1]) / float(raster)),
                                                                            _shift(min_max[0], min_max[1]) {}
 
 float mvbb::Discretization::step_x() const {
@@ -83,4 +83,3 @@ mvbb::ProjectedSplits mvbb::Discretization::best_splits()  const{
    }
     return projected_splits;
 }
-

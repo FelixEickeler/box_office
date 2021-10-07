@@ -114,6 +114,10 @@ namespace boxy{
                 return vertices;
             }
 
+            [[nodiscard]] std::array<Point, 8>& get_vertices(){
+                return vertices;
+            }
+
             [[nodiscard]] Plane_3 get_plane(BoxFaces face) const{
                 return std::make_from_tuple<Plane_3>(GetPoints(face).YOX);
             }

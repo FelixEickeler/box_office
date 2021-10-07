@@ -5,38 +5,41 @@
 #include "gtest/gtest.h"
 
 
-TEST (io_testing /*test suite name*/, load_points/*test name*/) {
-    auto paths = {"../../../python/tests/data/head_test.pcs", "../../../python/tests/data/sample2_full.pcs"};
+TEST (Input , LoadPoints_XYZC_NoThrow) {
+    auto paths = {"./files/bunny_classy_head.txt"};
     for(auto&path : paths){
         BoxScene eval;
         eval.set_pointcloud_path(path);
         eval.load_points();
+        ASSERT_NO_THROW();
     }
 
 }
 
-TEST (io_testing /*test suite name*/, load_classes/*test name*/) {
-    auto paths = {"../../../python/tests/data/head_test.ol", "../../../python/tests/data/sample2_full.pcs"};
-    for(auto&path : paths){
-        BoxScene eval;
-        eval.set_pointcloud_path(path);
-        eval.load_points();
-    }
+// TODO: Write test
+//TEST (io_testing , load_classes) {
+//    auto paths = {"./files/bunny_classy_head.ol", "./files/bunny_classy_head.txt"};
+//    for(auto&path : paths){
+//        BoxScene eval;
+//        eval.set_pointcloud_path(path);
+//        eval.load_points();
+//    }
+//}
+
+TEST (Input , CreateScene_XYZC_CorrectPointNumber) {
+    auto eval = create_scene("./files/bunny_classy_head.txt",
+                             "./files/bunny_classy_head.ol");
+    ASSERT_EQ(eval.get_pointcloud().size(), 37706);
 }
 
-TEST (io_testing /*test suite name*/, create_mvbb/*test name*/) {
-    auto eval = create_scene("../../../python/tests/data/head_test.pcs",
-                             "../../../python/tests/data/head_test.ol");
-    ASSERT_EQ(eval.get_pointcloud().size(), 155);
-}
-
-TEST (io_testing /*test suite name*/, decompose_2/*test name*/) {
-    auto eval = create_scene("../../../python/tests/data/sample2_full.pcs",
-                             "../../../python/tests/data/sample2_full.ol");
+TEST (Input , Decompose3D_Bunny_NoThrow) {
+    auto eval = create_scene("./files/bunny_classy_head.txt",
+                             "./files/bunny_classy_head.ol");
    auto entity = eval.get_object(1);
    mvbb::CGAL_MVBB<boxy::pointcloud_xyzc> algo;
    auto epoints = entity.get_points();
-   mvbb::decompose3D(epoints, &algo, 1, 0.99);
+   mvbb::decompose3D(epoints, &algo, mvbb::Target_Setting(1, 0.99));
+   ASSERT_NO_THROW();
 }
 
 

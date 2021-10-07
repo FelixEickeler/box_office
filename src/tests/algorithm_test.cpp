@@ -11,7 +11,7 @@
 
 TwoSplitStrategy two_split;
 
-//TEST (algorithm_testing /*test suite name*/, FitAndSplitHirachy /*test name*/) {
+//TEST (algorithm_testing , FitAndSplitHirachy ) {
 //    {
 //        using namespace mvbb;
 //        using type_fash =  FitAndSplitNode<pointcloud_xyzc>;
@@ -58,21 +58,23 @@ TwoSplitStrategy two_split;
 //    }
 //}
 
-TEST (algorithm_testing /*test suite name*/, Rasterizer_StepSize /*test name*/) {
+TEST (Discretization , Creation_Minmax_CorrectStepsize ) {
     using namespace mvbb;
     std::array<float,4> min_max = {0,0, 2, 2 * float(sqrt(2))};
     TwoSplitStrategy two_split;
     Discretization rasterizer(two_split, min_max, 256);
     auto [step_x, step_y] = rasterizer.step_sizes();
-    ASSERT_FLOAT_EQ(step_x, 0.0078431372549019607843137254902);
-    ASSERT_FLOAT_EQ(step_y, 0.01109187107743603959844461744478);
+    ASSERT_FLOAT_EQ(step_x, 0.0078125);
+    ASSERT_FLOAT_EQ(step_y, 0.011048543);
 }
-/// TODO: Make Test not that idotic, it did not help...
-TEST (algorithm_testing /*test suite name*/, Rasterizer_Insert /*test name*/) {
+
+TEST (Discretization , Insert_Testpoints_CorrectGrid ) {
     using namespace mvbb;
     auto plane_points = Get_Points_on_Plane();
     std::array<float,4> min_max = {0,0, 2, 2 * float(sqrt(2))};
     TwoSplitStrategy two_split;
+    MinMax2f mm(min_max);
+    auto somesome = extend_boundaries(mm);
     Discretization rasterizer(two_split, min_max, 3);
     for(auto& p2d : plane_points){
         rasterizer.insert(p2d);
@@ -106,7 +108,7 @@ std::tuple<mvbb::Discretization, std::vector<Point2D>> GenerateRasterizer3x3(){
     return {rasterizer, plane_points};
 }
 
-TEST (algorithm_testing /*test suite name*/, get_first_and_last_slot /*test name*/) {
+TEST (Discretization , GetFirstAndLastSlot_Testpoints3x3AndOrientation_CorrectSlotSpans ) {
     auto [rasterizer, _] = GenerateRasterizer3x3();
 //    EXPECT_TRUE(false) << rasterizer.Grid().raster() << "\n";
     auto res_x = rasterizer.Grid().get_first_and_last_slot<GridOrientation::X>();
@@ -122,7 +124,7 @@ TEST (algorithm_testing /*test suite name*/, get_first_and_last_slot /*test name
 }
 
 
-TEST (algorithm_testing /*test suite name*/, best_split_rasterized /*test name*/) {
+TEST (Algorithm_TwoSplit , CalculateBestSplits_TestPoints3x3_CorrectGRIDSplit) {
     auto [rasterizer, _] = GenerateRasterizer3x3();
     auto [msr_ex, msr_ey] = two_split.calculate_best_splits(rasterizer.Grid());
     ASSERT_EQ(msr_ex.front().index, 0);
@@ -134,6 +136,13 @@ TEST (algorithm_testing /*test suite name*/, best_split_rasterized /*test name*/
  *  0 0 0 0 1 1 1
  *  0 0 0 0 1 1 1
  *  0 1 1 1 1 1 0
+ *
+ *  1, 0, 0, 0, 0, 0,
+ *  1, 0, 0, 0, 0, 0,
+ *  1, 0, 0, 0, 0, 0,
+ *  1, 0, 1, 0, 0, 1,
+ *  1, 0, 1, 0, 0, 1,
+ *  0, 0, 1, 0, 0, 1}
  *
  *  Rasterizer:
  *  Expected: true
@@ -153,15 +162,18 @@ std::tuple<mvbb::Discretization, std::vector<Point2D>> GenerateRasterizer3x7(){
             {4,1}, {5,1}, {6,1},
             {4,2}, {5,2}, {6,2},
     }};
-    std::array<float,4> min_max = {1,0, 6, 2};
+
+    //compensate as the grid with 0.5 as the points are defined in the middle
+    std::array<float,4> min_max = {1,0, static_cast<float>(6), static_cast<float>(2)};
     Discretization rasterizer(two_split, min_max, 6);
+    // again compensate
     for(auto& p2d : more_test_points){
         rasterizer.insert(p2d);
     }
     return {rasterizer, more_test_points};
 }
 
-TEST (algorithm_testing /*test suite name*/, get_first_and_last_slot2 /*test name*/) {
+TEST (Algorithm_TwoSplit , GetFirstAndLastSlot_Testpoints3x7AndOrientation_CorrectSlotSpans ) {
     auto [rasterizer, _] = GenerateRasterizer3x7();
     const auto test_points_x = (MatrixXu(2,6) <<  0, 0, 0, 0, 0, 2, 1,1,1,6,6,6).finished();
     auto res_x = rasterizer.Grid().get_first_and_last_slot<GridOrientation::X>();
@@ -172,7 +184,7 @@ TEST (algorithm_testing /*test suite name*/, get_first_and_last_slot2 /*test nam
 }
 
 
-TEST (algorithm_testing /*test suite name*/, min_split_rasterized2 /*test name*/) {
+TEST (Algorithm_TwoSplit , CalculateBestSplits_TestPoints3x7_CorrectGRIDSplit ) {
     using namespace mvbb;
     auto [rasterizer, _]  = GenerateRasterizer3x7();
     auto [msr_ex, msr_ey] = two_split.calculate_best_splits(rasterizer.Grid());
@@ -183,31 +195,39 @@ TEST (algorithm_testing /*test suite name*/, min_split_rasterized2 /*test name*/
 }
 
 /// Translate back to 3x7 grid;
-TEST (algorithm_testing /*test suite name*/, min_split_2 /*test name*/) {
+TEST (Algorithm_TwoSplit , CalculateBestSplits_TestPoints3x7_CorrectSPACESplit ) {
     using namespace mvbb;
     auto [rasterizer, _]  = GenerateRasterizer3x7();
     auto [ms_ex, ms_ey] = rasterizer.best_splits();
-    GridLine tx{{3,0},{3,2}};
-    GridLine ty{{0,0},{3,2}};
-//    EXPECT_TRUE(false) << "Check this, as the res increases from the grid used, but should be fine in continuous space !" ;
-    Vector2f ey_val;  ey_val << 0,0.4;
-    ASSERT_EQ(ms_ex.front().cut.start, ex_val);
-    ASSERT_FLOAT_EQ(ms_ex.front().area, 8.4);
-    ASSERT_EQ(ms_ey.front().cut.start, ey_val);
-    ASSERT_FLOAT_EQ(ms_ey.front().area, 8);
+    ProjectedLine tx{{3.5,0},{3.5,2}};
+    // perfect cut in x right of 3 => 3 < 3.5 (which is next, cut)
+    // perfect cut in y at above 0.0 => 0.0 < 0.33  (which is next, cut)
+
+    ProjectedLine ty{{1, 1.0/3},{6.0,1.0/3}};
+    ASSERT_FLOAT_EQ(ms_ex.front().cut.start.x(), tx.start.x());
+    ASSERT_FLOAT_EQ(ms_ex.front().cut.start.y(), tx.start.y());
+    ASSERT_FLOAT_EQ(ms_ex.front().cut.end.x(), tx.end.x());
+    ASSERT_FLOAT_EQ(ms_ex.front().cut.end.y(), tx.end.y());
+    ASSERT_FLOAT_EQ(ms_ex.front().area, 21.0 * 5.0/6*1.0/3);
+
+    ASSERT_FLOAT_EQ(ms_ey.front().cut.start.x(), ty.start.x());
+    ASSERT_FLOAT_EQ(ms_ey.front().cut.start.y(), ty.start.y());
+    ASSERT_FLOAT_EQ(ms_ey.front().cut.end.x(), ty.end.x());
+    ASSERT_FLOAT_EQ(ms_ey.front().cut.end.y(), ty.end.y());
+    ASSERT_FLOAT_EQ(ms_ex.front().area, 21.0 * 5.0/6*1.0/3);
 }
 
-TEST (algorithm_testing /*test suite name*/, Algo_MVBB/*test name*/) {
+TEST (Algorithm_MVBB , FitBoundingBox_Pig_PigBoxVolumeMatch) {
     mvbb::CGAL_MVBB<pointcloud_xyzc> algo;
-    std::filesystem::path source_pig("../../tests/data/pig.off");
-    std::filesystem::path proof_piggybox("../../tests/data/pig_bbox.off");
+    std::filesystem::path source_pig("./files/pig.off");
+    std::filesystem::path proof_piggybox("./files/pig_bbox.off");
     CGAL::Surface_mesh<Point> sm;
     if (!CGAL::Polygon_mesh_processing::IO::read_polygon_mesh(source_pig, sm) || sm.is_empty()) {
         ASSERT_TRUE(false) << "Testfile not found.";
     }
     CGAL::Surface_mesh<Point> proof;
     if (!CGAL::Polygon_mesh_processing::IO::read_polygon_mesh(proof_piggybox, proof) || proof.is_empty()) {
-        ASSERT_TRUE(false) << "Prooffile not found.";
+        ASSERT_TRUE(false) << "Profile not found.";
     }
 
     pointcloud_xyzc points;
@@ -218,20 +238,23 @@ TEST (algorithm_testing /*test suite name*/, Algo_MVBB/*test name*/) {
     BBox proof_bbox;
     auto idx = 0;
     for(const auto& v : vertices(proof)) {
-        proof_bbox.get_vertices()[idx] = proof.point(v);
+        auto tmp = proof.point(v);
+        proof_bbox.get_vertices()[idx] = tmp;
         ++idx;
     }
     auto bbox = algo.fit_bounding_box(points);
     ASSERT_NEAR(bbox.volume(), proof_bbox.volume(), 0.01);
     }
 
-TEST (algorithm_testing /*test suite name*/, Algo_PCA/*test name*/) {
-    ASSERT_TRUE(false) << "Not implmented yet";
-}
+// TODO still needed ?
+//TEST (algorithm_testing , Algo_PCA) {
+//    ASSERT_TRUE(false) << "Not implemented yet";
+//}
 
-TEST (algorithm_testing /*test suite name*/, decompose3D/*test name*/) {
+//TODO This ist more a functional test
+TEST (Python , Decompose3D_Pig_CorrectNumberOffSubBoxes) {
     mvbb::CGAL_MVBB<pointcloud_xyzc> mvbb;
-    std::filesystem::path source_pig("../../tests/data/bunny00.off");
+    std::filesystem::path source_pig("./files/pig.off");
     CGAL::Surface_mesh<Point> sm;
     if (!CGAL::Polygon_mesh_processing::IO::read_polygon_mesh(source_pig, sm) || sm.is_empty()) {
         ASSERT_TRUE(false) << "Testfile not found.";
@@ -241,12 +264,12 @@ TEST (algorithm_testing /*test suite name*/, decompose3D/*test name*/) {
         points.push_back(std::make_tuple(sm.point(v), 0));
     }
 
-    uint32_t levels = 1;
-    auto tree = mvbb::decompose3D(points, &mvbb, levels);
-    for(int k =0; k <= levels+1; ++k){
+    uint32_t levels = 3;
+    auto tree = mvbb::decompose3D(points, &mvbb, mvbb::Target_Setting(levels));
+    for(int k =0; k <= levels; ++k){
         uint32_t sk = 0;
         for(auto& node : tree.getNodes(k)) {
-            std::filesystem::path cell_path_name( "./bunny_tree_lvl" + std::to_string(k) + "_" + std::to_string(sk) + ".off");
+            std::filesystem::path cell_path_name( "./pig_lvl" + std::to_string(k) + "_" + std::to_string(sk) + ".off");
             CGAL::Surface_mesh<Point> obb_sm;
             auto obb_points = node.bounding_box.get_vertices();
             auto box = CGAL::make_hexahedron(obb_points[0], obb_points[1], obb_points[2], obb_points[3],
@@ -267,6 +290,6 @@ TEST (algorithm_testing /*test suite name*/, decompose3D/*test name*/) {
 
 
 //
-//TEST (algorithm_testing /*test suite name*/, Algo_MVBB /*test name*/) {
+//TEST (algorithm_testing , Algo_MVBB ) {
 //
 //}
