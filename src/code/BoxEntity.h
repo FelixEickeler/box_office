@@ -4,8 +4,6 @@
 
 #ifndef BOXOFFICE_BOXENTITY_H
 #define BOXOFFICE_BOXENTITY_H
-
-
 #include <cstdint>
 #include <utility>
 #include "typedefs.h"
@@ -19,14 +17,13 @@ class BoxEntity {
     pointcloud_xyzc points;
     FitAndSplitHierarchy<pointcloud_xyzc> tree_hierarchy;
     std::string name;
-    int decomposition_level = -1;
-    float used_gain = 0.0;
+    TargetSetting last_setting = {-1, 0.0};
 
     public:
         explicit BoxEntity(uint32_t id, std::string name, pointcloud_xyzc points) : id(id), name(std::move(name)), points(std::move(points)){}
 
         //TODO sanity checks
-        std::vector<FitAndSplitNode<pointcloud_xyzc>> decompose(int depth, float gain_threshold=0.99f);
+        std::vector<FitAndSplitNode<pointcloud_xyzc>> decompose(TargetSetting target_setting, SplitStrategy& split_strategy);
 
         [[nodiscard]] uint32_t get_id() const;
 

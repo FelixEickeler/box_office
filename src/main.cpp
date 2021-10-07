@@ -27,6 +27,19 @@ BoxScene create_scene_from_2numpy(py::array_t<float> nx4, std::unordered_map<int
 PYBIND11_MODULE(BoxOffice, module_handle) {
     module_handle.doc() = "This module provides a set of tools to execute the MVBB Decomposition!";
 
+    py::class_<TargetSetting>(module_handle, "TargetSetting")
+            .def(py::init<const int&>())
+            .def(py::init<const int&, const float&>())
+            .def(py::init<const int&, const float&, const int&>())
+            .def(py::init<const int&, const float&, const int&, const int&>())
+            .def_property_readonly("kappa", [](TargetSetting &self){ return self.kappa;})
+            .def_property_readonly("gain_threshold", [](TargetSetting &self){ return self.gain_threshold;})
+            .def_property_readonly("minimum_point_per_box", [](TargetSetting &self){ return self.minimum_point_per_box;})
+            .def_property_readonly("minimal_initial_volume_divider", [](TargetSetting &self){ return self.minimal_initial_volume_divider;});
+
+    py::class_<TwoSplitStrategy>(module_handle, "TwoSplitAlgorithm")
+            .def(py::init<>());
+
     py::class_<BBox>(module_handle, "BoundingBox")
             .def(py::init(&create_from_list))
             .def("get_vertices", [](const BBox &self) {
@@ -55,11 +68,8 @@ PYBIND11_MODULE(BoxOffice, module_handle) {
                 return helpers::xyzc_2_numpy(self.get_points());
             })
             .def("get_name", &BoxEntity::get_name)
-            .def("decompose", [](BoxEntity &self, int depth, float gain_threshold) {
-                return self.decompose(depth, gain_threshold);
-            })
-            .def("decompose", [](BoxEntity &self, int depth) {
-                return self.decompose(depth);
+            .def("decompose", [](BoxEntity &self, TargetSetting& ts, SplitStrategy& spst) {
+                return self.decompose(ts, spst);
             })
             .def(py::pickle([](const BoxEntity &self) {
                 return py::make_tuple(self.get_id(), self.get_name(), helpers::xyzc_2_numpy(self.get_points()));
@@ -81,6 +91,8 @@ PYBIND11_MODULE(BoxOffice, module_handle) {
             .def("get_object", [](BoxScene &self, int object_id) {
                 return self.get_object(object_id);
             });
+
+
     // get_points
 
     module_handle.def("create_scene", [](const std::string &point_src, const std::string &class_src) {

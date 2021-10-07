@@ -38,7 +38,8 @@ TEST (Input , Decompose3D_Bunny_NoThrow) {
    auto entity = eval.get_object(1);
    mvbb::CGAL_MVBB<boxy::pointcloud_xyzc> algo;
    auto epoints = entity.get_points();
-   mvbb::decompose3D(epoints, &algo, mvbb::Target_Setting(1, 0.99));
+   TwoSplitStrategy split_strategy;
+   mvbb::decompose3D(epoints, &algo, mvbb::TargetSetting(1, 0.99), split_strategy);
    ASSERT_NO_THROW();
 }
 

@@ -9,7 +9,7 @@
 using namespace mvbb;
 
 
-FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3D, Algo_Base<TPointCloudType> *const bbox_algorithm, Target_Setting const target_settings) {
+FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3D, Algo_Base<TPointCloudType> *const bbox_algorithm, TargetSetting const target_settings, SplitStrategy& split_strategy) {
     spdlog::trace("Processing: {} Points, with {} kappa", points3D.size(),  target_settings.kappa);
     spdlog::set_pattern("\t[%^%l%$][%S,%es] %v");
     spdlog::stopwatch sw;
@@ -36,8 +36,7 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
                 auto coordinate_system2D = bbox.get_plane_coordinates2D(current_face);
                 // ... rasterize !
 
-                TwoSplitStrategy twoSplitStrategy;
-                auto raster = Discretization::create_discretization(twoSplitStrategy, bbox, coordinate_system2D, 512);
+                auto raster = Discretization::create_discretization(split_strategy, bbox, coordinate_system2D, 512);
                 std::vector<Point2D> projected_2D;
                 for(auto& point : fas_node.points){
                     auto proj = projection_plane.projection(std::get<0>(point)); //project to plane (3D)
@@ -174,6 +173,27 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
     return tree;
 }
 
-Target_Setting::Target_Setting(uint32_t kappa_, float gain_threshold_, uint32_t minimum_point_per_box_,
-                               uint32_t minimal_initial_volume_divider_) :
-        kappa(kappa_), gain_threshold(gain_threshold_), minimum_point_per_box(minimum_point_per_box_), minimal_initial_volume_divider(minimal_initial_volume_divider_){}
+TargetSetting::TargetSetting(int kappa_, float gain_threshold_, int minimum_point_per_box_, int minimal_initial_volume_divider_) :
+    kappa(kappa_), gain_threshold(gain_threshold_), minimum_point_per_box(minimum_point_per_box_), minimal_initial_volume_divider(minimal_initial_volume_divider_){}
+
+bool TargetSetting::operator==(TargetSetting& that) const {
+    return this->kappa == that.kappa && this->gain_threshold == that.gain_threshold &&
+           this->minimal_initial_volume_divider == that.minimal_initial_volume_divider && this->minimum_point_per_box == that.minimum_point_per_box;
+}
+
+bool TargetSetting::operator!=(TargetSetting& that) const {
+    return !(*this == that);
+}
+
+bool TargetSetting::only_inferior_gain(TargetSetting &that) const {
+    if(kappa <= that.kappa){
+        if(this->gain_threshold == that.gain_threshold &&
+           this->minimal_initial_volume_divider == that.minimal_initial_volume_divider &&
+           this->minimal_initial_volume_divider == that.minimal_initial_volume_divider){return true;}
+    }
+    return false;
+}
+
+TargetSetting &TargetSetting::operator=(const TargetSetting &f) {
+    return *this;
+}

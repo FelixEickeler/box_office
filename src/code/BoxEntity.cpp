@@ -4,18 +4,17 @@
 
 #include "BoxEntity.h"
 
-std::vector<FitAndSplitNode<pointcloud_xyzc>> BoxEntity::decompose(int depth, float gain_threshold) {
-    if(decomposition_level < depth || used_gain != gain_threshold) {
-        mvbb::CGAL_MVBB<pointcloud_xyzc> cgal_min_volumne;
-        auto target = mvbb::Target_Setting(depth, gain_threshold);
-        this->tree_hierarchy = mvbb::decompose3D(this->points, &cgal_min_volumne, target);
-        decomposition_level = depth;
-        used_gain = gain_threshold;
+std::vector<FitAndSplitNode<pointcloud_xyzc>> BoxEntity::decompose(TargetSetting target_setting, SplitStrategy& split_strategy) {
+    if(!last_setting.only_inferior_gain(target_setting)) {
+        mvbb::CGAL_MVBB<pointcloud_xyzc> cgal_min_volume;
+        auto target = mvbb::TargetSetting(target_setting.kappa , target_setting.gain_threshold);
+        this->tree_hierarchy = mvbb::decompose3D(this->points, &cgal_min_volume, target, split_strategy);
+        last_setting = target_setting;
         return this->tree_hierarchy.get_finalized();
     }
     else{
-        auto previous_levels = this->tree_hierarchy.get_finalized(depth);
-        auto this_level = this->tree_hierarchy.getNodes(depth);
+        auto previous_levels = this->tree_hierarchy.get_finalized(target_setting.kappa );
+        auto this_level = this->tree_hierarchy.getNodes(target_setting.kappa );
         for(auto& tl : this_level){
             previous_levels.push_back(tl);
         }

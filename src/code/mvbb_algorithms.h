@@ -65,20 +65,25 @@ namespace mvbb {
         return BBox(vertices);
     }
 
-    struct Target_Setting {
-        const uint32_t kappa;
+    struct TargetSetting {
+        const int kappa;
         const float gain_threshold;
-        const uint32_t minimum_point_per_box;
-        const uint32_t minimal_initial_volume_divider;
+        const int minimum_point_per_box;
+        const int minimal_initial_volume_divider;
 
-        Target_Setting(uint32_t kappa_, float gain_threshold_=0.99, uint32_t minimum_point_per_box_ = 10,
-                       uint32_t minimal_initial_volume_divider_ = 1000);
+        TargetSetting(int kappa_, float gain_threshold_=0.99, int minimum_point_per_box_ = 10,
+                      int minimal_initial_volume_divider_ = 1000);
+        TargetSetting& operator= (const TargetSetting& f);
+
+        bool only_inferior_gain(TargetSetting& that) const;
+        bool operator==(TargetSetting& that) const;
+        bool operator!=(TargetSetting& that) const;
     };
 
     using TPointCloudType = pointcloud_xyzc;
 
     FitAndSplitHierarchy<TPointCloudType>
-    decompose3D(TPointCloudType &points3D, Algo_Base<TPointCloudType> *bbox_algorithm, Target_Setting target_settings);
+    decompose3D(TPointCloudType &points3D, Algo_Base<TPointCloudType> *bbox_algorithm, TargetSetting target_settings, SplitStrategy& split_strategy);
 
 }
 #endif

@@ -265,7 +265,9 @@ TEST (Python , Decompose3D_Pig_CorrectNumberOffSubBoxes) {
     }
 
     uint32_t levels = 3;
-    auto tree = mvbb::decompose3D(points, &mvbb, mvbb::Target_Setting(levels));
+
+    TwoSplitStrategy two_split_strategy;
+    auto tree = mvbb::decompose3D(points, &mvbb, mvbb::TargetSetting(levels), two_split_strategy);
     for(int k =0; k <= levels; ++k){
         uint32_t sk = 0;
         for(auto& node : tree.getNodes(k)) {
