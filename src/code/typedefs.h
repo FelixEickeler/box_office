@@ -183,6 +183,22 @@ namespace boxy{
                 }
                 return tmp;
             }
+
+        template<class PointType>
+        bool is_inside(PointType point) const{
+            std::array<Plane_3, 8> sides =  {get_plane(BoxFaces::A),    get_plane(BoxFaces::B), get_plane(BoxFaces::C),
+                                             get_plane(BoxFaces::D),    get_plane(BoxFaces::E), get_plane(BoxFaces::F)};
+
+            return !std::any_of(sides.begin(), sides.end(),
+                        [point](auto& plane){return plane.has_on_positive_side(std::get<0>(point));});
+        }
+
+        bool is_inside(Point point) const{
+            std::array<Plane_3, 8> sides =  {get_plane(BoxFaces::A),    get_plane(BoxFaces::B), get_plane(BoxFaces::C),
+                                             get_plane(BoxFaces::D),    get_plane(BoxFaces::E), get_plane(BoxFaces::F)};
+            return !std::any_of(sides.begin(), sides.end(), [point](auto& plane){return plane.has_on_positive_side(point);});
+        }
+
     };
 
     // TODO Extract this to a Pybind Typedef i guess ?

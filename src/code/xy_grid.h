@@ -3,8 +3,8 @@
 //
 #ifndef BOXOFFICE_XY_GRID_H
 #define BOXOFFICE_XY_GRID_H
-#include "typedefs.h"
 #include "rasterizer_definitions.h"
+#include "typedefs.h"
 
 namespace mvbb {
 

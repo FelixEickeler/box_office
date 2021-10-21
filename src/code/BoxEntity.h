@@ -9,6 +9,7 @@
 #include "typedefs.h"
 #include "mvbb_algorithms.h"
 #include "FitAndSplitHierarchy.h"
+#include "TargetSetting.h"
 
 using namespace boxy;
 

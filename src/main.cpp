@@ -4,6 +4,8 @@
 #include <pybind11/numpy.h>
 #include "code/mvbb_algorithms.h"
 #include "code/pybind_helpers.h"
+#include "TargetSetting.h"
+
 namespace py = pybind11;
 
 BBox create_from_list(py::array_t<float> numpy83){
@@ -32,10 +34,12 @@ PYBIND11_MODULE(BoxOffice, module_handle) {
             .def(py::init<const int&, const float&>())
             .def(py::init<const int&, const float&, const int&>())
             .def(py::init<const int&, const float&, const int&, const int&>())
+            .def(py::init<const int&, const float&, const int&, const int&, const std::string&>())
             .def_property_readonly("kappa", [](TargetSetting &self){ return self.kappa;})
             .def_property_readonly("gain_threshold", [](TargetSetting &self){ return self.gain_threshold;})
             .def_property_readonly("minimum_point_per_box", [](TargetSetting &self){ return self.minimum_point_per_box;})
-            .def_property_readonly("minimal_initial_volume_divider", [](TargetSetting &self){ return self.minimal_initial_volume_divider;});
+            .def_property_readonly("minimal_initial_volume_divider", [](TargetSetting &self){ return self.minimal_initial_volume_divider;})
+            .def_property_readonly("output_cutting_plane_path", [](TargetSetting &self){ return self.output_cutting_plane_path;});
 
     py::class_<TwoSplitStrategy>(module_handle, "TwoSplitAlgorithm")
             .def(py::init<>());
@@ -101,12 +105,12 @@ PYBIND11_MODULE(BoxOffice, module_handle) {
 
     module_handle.def("set_logger_level", [](const std::string &log_level){
        if (log_level == "trace"){ spdlog::set_level(spdlog::level::trace); return;}
-       if (log_level == "debug"){ spdlog::set_level(spdlog::level::trace); return;}
-       if (log_level == "info"){ spdlog::set_level(spdlog::level::trace); return;}
-       if (log_level == "warn"){ spdlog::set_level(spdlog::level::trace); return;}
-       if (log_level == "err"){ spdlog::set_level(spdlog::level::trace); return;}
-       if (log_level == "critical"){ spdlog::set_level(spdlog::level::trace); return;}
-       if (log_level == "off"){ spdlog::set_level(spdlog::level::trace); return;}
+       if (log_level == "debug"){ spdlog::set_level(spdlog::level::debug); return;}
+       if (log_level == "info"){ spdlog::set_level(spdlog::level::info); return;}
+       if (log_level == "warn"){ spdlog::set_level(spdlog::level::warn); return;}
+       if (log_level == "err"){ spdlog::set_level(spdlog::level::err); return;}
+       if (log_level == "critical"){ spdlog::set_level(spdlog::level::critical); return;}
+       if (log_level == "off"){ spdlog::set_level(spdlog::level::off); return;}
        spdlog::warn("Logger Level {} does not exist. Use: trace, debug, info, warn, err, critical or off", log_level);
     });
 

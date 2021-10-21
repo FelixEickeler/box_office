@@ -1,10 +1,15 @@
 //
 // Created by felix on 18.07.2021.
 //
+#define PRODUCTION 1
 #include <spdlog/spdlog.h>
+
+#include <utility>
 #include "spdlog/stopwatch.h"
 #include "mvbb_algorithms.h"
 #include "SplitStrategies.h"
+#include "TargetSetting.h"
+#include "result_writer.h"
 
 using namespace mvbb;
 
@@ -14,9 +19,11 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
     spdlog::set_pattern("\t[%^%l%$][%S,%es] %v");
     spdlog::stopwatch sw;
 
+    auto result_writer = make_result_writer(target_settings.base_path);
     auto initial_bbox = bbox_algorithm->fit_bounding_box(points3D);
     FitAndSplitHierarchy<TPointCloudType> tree;
     tree.emplace_back(0, initial_bbox, points3D.begin(), points3D.end());
+    Path result_postfix;
 
     for(auto depth=0; depth< target_settings.kappa; ++depth){
         int node_counter = 0;
@@ -25,6 +32,14 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
         spdlog::debug("Decomposing level: {0} with {1} max gain and a hierarchy volume {2}", depth, target_settings.gain_threshold, current_hierarchy_volume / initial_bbox.volume());
 
         for(auto& fas_node : tree.getNodes(depth)) {   //std::for_each(all_parents.begin(), all_parents.end(), [&tree, bbox_algorithm, depth, &node_counter](auto& fas_node){
+            #ifdef PRODUCTION
+            if(target_settings.output_boxes) {
+                result_postfix = fmt::format("depth={}-node={}", std::to_string(depth), node_counter);
+                result_writer->set_path_addendum(result_postfix);
+                result_writer->write(ResultType::BoundingBox(), fas_node.bounding_box, fas_node.final);
+            }
+            #endif
+
             auto bbox = fas_node.bounding_box;
             BoxSplits best_bbox_splits;
             // A=0; B=1; C=2 => see typdef::BoxFaces;
@@ -37,129 +52,138 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
                 // ... rasterize !
 
                 auto raster = Discretization::create_discretization(split_strategy, bbox, coordinate_system2D, 512);
+
                 std::vector<Point2D> projected_2D;
                 for(auto& point : fas_node.points){
+//                    if(!bbox.is_inside(point)){
+//                        std::cout << "If this triggers this is bad\n";
+//                    }
                     auto proj = projection_plane.projection(std::get<0>(point)); //project to plane (3D)
                     auto point2d = coordinate_system2D.project_onto_plane(proj); //project to plane (2D) & new coordinate system
+                    if(point2d.x() < 0 && point2d.y() < 0){
+                        std::cout << "Debug CheckiThing\n";
+                    }
                     raster.insert(point2d);
                 }
-#if false
-                std::vector<Point> after_transform; // debug
-                    auto dim = grid.raster();
-                    for(auto i=0; i < dim; ++i){
-                        for(auto j=0; j < dim; ++j){
-                            if(grid.get(i,j) > 0) {
-                                Point2D p2d_grid;
-                                p2d_grid << i, j;
-                                auto p2d = grid.from_grid(p2d_grid);
-                                auto gp = coordinate_system2D.project_to_global(p2d);
-                                after_transform.push_back(gp);
-                            }
-                        }
-                    }
 
-                    std::filesystem::path grid_global_path("./grid_global_" + std::to_string(depth) + "_" + std::to_string(node_counter) + "_" + std::to_string(face) + ".csv");
-                    if (!CGAL::IO::write_OFF(grid_global_path, after_transform, CGAL::parameters::stream_precision(6))) {
-                        std::cout << "oh no\n";
-                    }
+               #ifdef PRODUCTION
+                if(target_settings.output_grids){
+                    result_postfix =fmt::format("node={}-face={}", std::to_string(node_counter), std::to_string(face));
+                    result_writer->set_path_addendum(result_postfix);
+                    result_writer->write(ResultType::Grid(), raster, coordinate_system2D);
+                }
+               #endif
 
-                    // go primary & secondary direction
-#endif
                 auto cell_depth = bbox.get_depth(current_face);
                 best_bbox_splits[current_face] = raster.best_splits();
-#if false
+                //Output possible plane3s
+                #if false
                 for(auto i = 0; i < 2; ++i) {
                         auto cut = coordinate_system2D.project_to_global(all_splits[face * 2 + i].end_cut);
                         auto fulcrum = coordinate_system2D.project_to_global(all_splits[face * 2 + i].begin_cut);
                         auto origin = coordinate_system2D.project_to_global(grid.from_grid(Point2D(0,0)));
                         auto[plane_mesh, plane_system] = Plane2Mesh(fulcrum, origin, cut, i > 0);
 
-
                         std::filesystem::path cplan_off("./cutting_plane_" + std::to_string(depth) + "_" + std::to_string(face) + "_" + std::to_string(i) + ".off");
                         if (!CGAL::IO::write_OFF(cplan_off, plane_mesh, CGAL::parameters::stream_precision(6))) {
                             std::cout << "oh no2\n";
                         }
-
 //                        std::filesystem::path plane_system_path("./cutting_plane_system" + std::to_string(depth) + "_" + std::to_string(face) + "_" + std::to_string(i) + ".off");
 //                        if (!CGAL::IO::write_OFF(plane_system_path, plane_system, CGAL::parameters::stream_precision(6))) {
 //                            std::cout << "oh no3\n";
 //                        }
-
-
 //                        GTEST_COUT << "CUT: " << depth << "Plane: " << std::to_string(face) << "direction:" << i << " Volumne" << std::to_string(all_splits[face*2+i].area)
 //                               << std::endl;
 //                }
                     }
-#endif
+                #endif
             }
-
             // select_best_split & get the face its on
             auto [best_split, selected_face] = best_bbox_splits.superior_split();
-            // create cutting plane
-            Plane_3 projection_plane = bbox.get_plane(selected_face);
-            // save coordinate system in super structure ! This should be omitted as its only created for one call;
 
+
+            // reinstate the PlaneCoordinate System
             auto coordinate_system2D = bbox.get_plane_coordinates2D(selected_face);
-            auto p2 = coordinate_system2D.project_to_global(best_split.cut.end);
-            auto o1 = coordinate_system2D.project_to_global(best_split.cut.start);
-            auto p1 = coordinate_system2D.project_to_global(best_split.origin);
-            auto orthogal_vector = CGAL::cross_product(p1 - o1, p2 - o1);
-            Plane_3 cutting_plane(o1, p2, o1 + orthogal_vector);
-            // TODO: Check if orienation makes sense with ::Y ?
-            auto[plane_mesh, plane_system] = Plane2Mesh(o1, p1, p2, best_split.orientation == GridOrientation::Y);
+            // planes ordered from 0 -> raster
+            auto cutting_planes = best_split.project_cuts_and_create_planes(coordinate_system2D);
 
-            // write final plane to .off
-#ifdef false
-            std::filesystem::path cpf( "./final_plane" + std::to_string(depth) + "_" + std::to_string(node_counter++) + "_" +
-                            std::to_string(selected_face) + ".off");
-                    if (!CGAL::IO::write_OFF(cpf, plane_mesh, CGAL::parameters::stream_precision(6))) {
-                        std::cout << "The numer of vertices is: " << plane_mesh.vertices().size() << "\n";
-                        throw std::runtime_error("not found");
-                    }
-#endif
+            #ifdef PRODUCTION
+            if(target_settings.output_cuts) {
+                result_postfix = fmt::format("depth={}-node={}-face={}", std::to_string(depth),
+                                             node_counter, static_cast<int>(selected_face));
+                result_writer->set_path_addendum(result_postfix);
+                result_writer->write(ResultType::Plane(), best_split, coordinate_system2D);
+            }
+            #endif
 
-            // split and fit new boxes
-            // TODO Move this inside FitAndSplitHierachy !
-            auto second_bbox_begins_at = std::partition(fas_node.points.begin(), fas_node.points.end(),
-                                                        [&cutting_plane](auto &point) {
-                                                            return cutting_plane.has_on_negative_side(std::get<0>(point));
-                                                        });
+            // Potential bug in triple split
+            // function that rearranges the underling points accordingly to proposal
+            // TODO make function from lambda
+            auto calc_begin_of_next_point_partition = [fas_node](const Plane_3& next_cutting_plane, auto points_begin) {
+                return std::partition(points_begin, fas_node.points.end(),
+                           [&next_cutting_plane](auto &point) {
+                               return next_cutting_plane.has_on_negative_side(std::get<0>(point));
+                           });
+            };
 
-            // calculate new bounding boxes if the points are higher thatn X
-            // TODO use ranges !!!
-            TPointCloudType vector_bbox1(fas_node.points.begin(), second_bbox_begins_at);
-            TPointCloudType vector_bbox2(second_bbox_begins_at, fas_node.points.end());
+            // scope defintions
+            std::vector<typename TPointCloudType::iterator> bucket_boundaries = {fas_node.points.begin()};
+            std::vector<int> bucket_sizes;
 
-            BBox bbox1;
-            BBox bbox2;
-
-            // Reject if gain or points are not enough
-            std::string status = "rejected";
+            std::vector<BBox> proposed_boxes;
+            float proposed_volume = 0;
             float gain = -1;
-            if(vector_bbox1.size() > target_settings.minimum_point_per_box && vector_bbox2.size() > target_settings.minimum_point_per_box) {
-                spdlog::debug("First Box: {}", vector_bbox1.size());
-                bbox1 = bbox_algorithm->fit_bounding_box(vector_bbox1);
 
-                spdlog::debug("Second Box: {}", vector_bbox2.size());
-                bbox2 = bbox_algorithm->fit_bounding_box(vector_bbox2);
-                gain = (current_hierarchy_volume - fas_node.bounding_box.volume() + bbox1.volume() + bbox2.volume()) / current_hierarchy_volume;
-                //calculate gain
-                if(gain < target_settings.gain_threshold && bbox2.volume() > initial_bbox.volume() / target_settings.minimal_initial_volume_divider && bbox2.volume() > initial_bbox.volume() / target_settings.minimal_initial_volume_divider){
-                    tree.emplace_back(depth+1, bbox1, fas_node.points.begin(), second_bbox_begins_at);
-                    tree.emplace_back(depth+1, bbox2, second_bbox_begins_at, fas_node.points.end());
-                    status = "accepted";
-                }
-                else{
-                    //  reject and not push them to the tree e.g. take the parent
-                    fas_node.final = true;
+            // Reject if there are little points ...
+            bool low_point_number = false;
+            for(const auto& next_cutting_plane : cutting_planes){
+                bucket_boundaries.push_back(calc_begin_of_next_point_partition(next_cutting_plane, bucket_boundaries[bucket_boundaries.size()-1]));
+                auto points_in_this_bucket = bucket_sizes.emplace_back(std::distance(bucket_boundaries[bucket_boundaries.size()-2], bucket_boundaries.back()));
+                if(points_in_this_bucket > target_settings.minimum_point_per_box){
+                    low_point_number = true;
                 }
             }
-            else{
-                // reject and not push them to the tree
+            bucket_boundaries.push_back(fas_node.points.end());
+            bucket_sizes.emplace_back(std::distance(bucket_boundaries[bucket_boundaries.size()-2], bucket_boundaries.back()));
+
+            auto bucket_stats_string = std::accumulate(std::next(bucket_sizes.begin()), bucket_sizes.end(), std::to_string(bucket_sizes[0]),
+                [](const std::string& a, int size){
+                    return a + ", " + std::to_string(size);
+                });
+
+            //... of if the volume is too low ...
+            for(auto right_bucket_boundary_idx=1; right_bucket_boundary_idx < bucket_boundaries.size(); ++right_bucket_boundary_idx) {
+                auto left_bucket_boundary = bucket_boundaries[right_bucket_boundary_idx-1];
+                auto right_bucket_boundary = bucket_boundaries[right_bucket_boundary_idx];
+
+                TPointCloudType this_bucket(left_bucket_boundary, right_bucket_boundary);
+                auto& proposed_bbox = proposed_boxes.emplace_back(bbox_algorithm->fit_bounding_box(this_bucket));
+                // check if the minimum volume is adhered otherwise finalize
+                if(bbox.volume() < initial_bbox.volume() / target_settings.minimal_initial_volume_divider){
+                    goto skip_rest_finalize_and_goto_next_node;
+                }
+                proposed_volume += proposed_bbox.volume();
+            }
+
+            //... or of the gain is too low ...
+            gain = (current_hierarchy_volume - fas_node.bounding_box.volume() + proposed_volume) / current_hierarchy_volume;
+            if(gain < target_settings.gain_threshold){
+                int dive = depth+1;
+                for(auto pbox_idx=0; pbox_idx < proposed_boxes.size(); ++pbox_idx){
+                    auto left_bucket_boundary = bucket_boundaries[pbox_idx];
+                    auto right_bucket_boundary = bucket_boundaries[pbox_idx+1];
+                    tree.emplace_back(dive, proposed_boxes[pbox_idx], left_bucket_boundary, right_bucket_boundary);
+                }
+            }
+
+            // node was finalized before e.g. protector for dead end !
+            if(fas_node.final){
+                skip_rest_finalize_and_goto_next_node:;
                 fas_node.final = true;
             }
-            // print statistics
-            spdlog::trace("Box: {0}\t Points: {1}\t=>\t({2}\t|\t{3})\t gain: {4}\t status: {5}", node_counter, fas_node.points.size(), vector_bbox1.size(), vector_bbox2.size(), gain, status);
+
+
+            spdlog::trace("Box: {0}\t Points: {1}\t=>{2}\t| gain: {3}\t | status: {4}", node_counter, fas_node.points.size(), bucket_stats_string, gain, fas_node.final ? "rejected" : "accepted");
             node_counter++;
         }
     }
@@ -168,32 +192,11 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
     for(auto& node : tree.max_depth()){
         node.final = true;
     }
+
+
     spdlog::debug("Decomposition took: {} seconds. Final hierarchy volume:\t {}", sw, tree.current_hierarchy_volume() / initial_bbox.volume());
     spdlog::set_pattern("%+");
     return tree;
 }
 
-TargetSetting::TargetSetting(int kappa_, float gain_threshold_, int minimum_point_per_box_, int minimal_initial_volume_divider_) :
-    kappa(kappa_), gain_threshold(gain_threshold_), minimum_point_per_box(minimum_point_per_box_), minimal_initial_volume_divider(minimal_initial_volume_divider_){}
 
-bool TargetSetting::operator==(TargetSetting& that) const {
-    return this->kappa == that.kappa && this->gain_threshold == that.gain_threshold &&
-           this->minimal_initial_volume_divider == that.minimal_initial_volume_divider && this->minimum_point_per_box == that.minimum_point_per_box;
-}
-
-bool TargetSetting::operator!=(TargetSetting& that) const {
-    return !(*this == that);
-}
-
-bool TargetSetting::only_inferior_gain(TargetSetting &that) const {
-    if(kappa <= that.kappa){
-        if(this->gain_threshold == that.gain_threshold &&
-           this->minimal_initial_volume_divider == that.minimal_initial_volume_divider &&
-           this->minimal_initial_volume_divider == that.minimal_initial_volume_divider){return true;}
-    }
-    return false;
-}
-
-TargetSetting &TargetSetting::operator=(const TargetSetting &f) {
-    return *this;
-}

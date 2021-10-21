@@ -4,6 +4,8 @@
 
 #include "rasterizer.h"
 
+
+
 Point2D mvbb::Discretization::grid2space(const Point2D &grid_point) const{
     return grid_point.cwiseProduct(_scale) + _shift;
 }
@@ -15,6 +17,15 @@ Point2D mvbb::Discretization::grid2space(const Eigen::Matrix<uint32_t, 2, 1> &gr
 mvbb::ProjectedLine mvbb::Discretization::grid2space(const GridLine &grid_line) const {
     return ProjectedLine{grid2space(grid_line.start), grid2space(grid_line.end)};
 }
+
+std::vector<mvbb::ProjectedLine> mvbb::Discretization::grid2space(const std::vector<GridLine> &grid_lines) const{
+    std::vector<mvbb::ProjectedLine> projected_lines;
+    projected_lines.reserve(grid_lines.size());
+    std::transform(grid_lines.begin(), grid_lines.end(), std::back_inserter(projected_lines),
+                   [this](const auto& gl)->mvbb::ProjectedLine{ return grid2space(gl);});
+    return projected_lines;
+}
+
 
 float mvbb::Discretization::area() const {
     return (_min_max[2] - _min_max[0]) * (_min_max[3] - _min_max[1]);
@@ -33,6 +44,11 @@ mvbb::Discretization mvbb::Discretization::create_discretization(SplitStrategy& 
 
 void mvbb::Discretization::insert(const Point2D &point2D) {
    auto point_grid = ((point2D - _shift).cwiseQuotient(_scale)).cast<uint32_t>();
+   auto t = point_grid.x();
+   auto t2 = point_grid.y();
+   if(t > 511 || t2 > 511){
+       std::cout << "testestest" << "\n";
+   }
     _grid.data(point_grid.y(), point_grid.x()) += 1;
 }
 
@@ -55,7 +71,7 @@ std::tuple<float, float> mvbb::Discretization::step_sizes() const {
     return {_scale[0], _scale[1]};
 }
 
-mvbb::XY_Grid& mvbb::Discretization::Grid() {
+mvbb::XY_Grid& mvbb::Discretization::Grid(){
     return _grid;
 }
 
@@ -73,13 +89,13 @@ mvbb::ProjectedSplits mvbb::Discretization::best_splits()  const{
     Vector2f origin = grid2space(Point2D(0, 0));
 
    for(const auto& orientation : GridOrientationEnumerator){
-       for(const auto& os : best_grid_splits[orientation]){
-           projected_splits[orientation].emplace_back(
-                   grid2space(os.cut),
+       auto os = best_grid_splits[orientation];
+       projected_splits[orientation].emplace_back(
+                   grid2space(os.cuts),
                    origin,
                    os.area * cell_area,
                    os.orientation);
-       }
+
    }
-    return projected_splits;
+   return projected_splits;
 }

@@ -3,6 +3,8 @@ set(CMAKE_CXX_STANDARD 17)
 project(BoxOffice)
 set(BINARY ${CMAKE_PROJECT_NAME})
 
+option(EIGEN_NO_DEBUG "Disables Eigen's assertions" OFF)
+
 message("Current Directory:" ${PROJECT_SOURCE_DIR})
 #set(CMAKE_CXX_FLAGS_DEBUG "-g -O2")
 #set(CMAKE_BUILD_TYPE "Release")

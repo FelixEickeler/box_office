@@ -3,6 +3,7 @@
 //
 #include "rasterizer_definitions.h"
 #include <exception>
+#include <functional>
 
 mvbb::MinMax2f mvbb::minmax2D(const BBox &bbox, const CoordinateSystem2D &coordinate_system2D) {
     mvbb::MinMax2f min_max2D{1.0e10, -1.0e-10,1.0e-10,-1.0e-10};
@@ -47,7 +48,6 @@ std::vector<mvbb::ProjectedSplit>::const_iterator mvbb::ProjectedSplits::best_xy
 
 mvbb::BoxSplits::Return_Best_Split mvbb::BoxSplits::superior_split() {
     // Which is the best split
-
     if(_box_splits.empty()) {
         throw std::logic_error("Something went wrong, the splits are empty");
     }
@@ -105,3 +105,21 @@ mvbb::MinMax2f::MinMax2f(float min_x_, float min_y_, float max_x_, float max_y_)
 
 mvbb::MinMax2f::MinMax2f(std::array<float, 4> arr_minmax) : min_x(arr_minmax[0]), min_y(arr_minmax[1]), max_x(arr_minmax[2]),
                                                  max_y(arr_minmax[3]) {}
+
+const mvbb::ProjectedSplit::CutListSorted
+mvbb::ProjectedSplit::project_cuts_and_create_planes(const CoordinateSystem2D &back_projection,
+                                                     std::filesystem::path debug_output_planes_path) {
+
+    CutListSorted cutting_planes;
+    std::transform(cuts.begin(), cuts.end(), std::back_inserter(cutting_planes),
+                   [back_projection, this](const auto& cut){
+                        auto p2 = back_projection.project_to_global(cut.end);
+                        auto o1 = back_projection.project_to_global(cut.start);
+                        auto p1 = back_projection.project_to_global(origin);
+                        // generate plane normal orthogonal
+                        auto orthogal_vector = CGAL::cross_product(p1 - o1, p2 - o1);
+                        // create a plane that cuts the discretized plane orthogonal
+                        return Plane_3(o1, p2, o1 + orthogal_vector);
+                    });
+    return cutting_planes;
+}

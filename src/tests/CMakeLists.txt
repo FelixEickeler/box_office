@@ -31,7 +31,7 @@ endif()
 
 # actual test targets for gtest
 list(REMOVE_ITEM TEST_SOURCES "${PROJECT_SOURCE_DIR}/tests/valgrind_decompose_target.cpp")
-add_executable(${BINARY} ${TEST_SOURCES})
+add_executable(${BINARY} ${TEST_SOURCES} test_bbox.cpp)
 target_link_libraries(${BINARY} PRIVATE gtest gtest_main CGAL::CGAL CGAL::Eigen3_support spdlog::spdlog)
 target_include_directories(${BINARY} PUBLIC ../code)
 target_link_libraries(${BINARY} PUBLIC ${CMAKE_PROJECT_NAME}_lib )

@@ -13,13 +13,6 @@
 #include <functional>
 #include "SplitStrategies.h"
 
-
-// Rasterizer constructs generate a dicretizaton
-// a dicretizaton has a grid
-// a dicretizaton can convert grid information to normal information
-// all calculus is done on grid after conversation
-
-//const static Eigen::IOFormat CSVFormat(Eigen::StreamPrecision, Eigen::DontAlignCols, "\t", "\n");
 using namespace boxy;
 namespace mvbb {
     struct SpaceProxy{
@@ -47,6 +40,7 @@ namespace mvbb {
             [[nodiscard]] Point2D grid2space(const Point2D &grid_point) const;
             [[nodiscard]] Point2D grid2space(const Vector2i &grid_point) const;
             [[nodiscard]] ProjectedLine grid2space(const GridLine &grid_line) const;
+            [[nodiscard]] std::vector<mvbb::ProjectedLine> grid2space(const std::vector<GridLine> &grid_lines) const;
             [[nodiscard]] float area() const;
 
             XY_Grid& Grid();

@@ -5,6 +5,7 @@
 #ifndef BOXOFFICE_RASTERIZER_DEFINITIONS_H
 #define BOXOFFICE_RASTERIZER_DEFINITIONS_H
 #include "typedefs.h"
+//#include "mvbb_algorithms.h"
 #include <exception>
 
 using namespace boxy;
@@ -32,17 +33,17 @@ namespace mvbb{
     };
 
     struct GridSplit{
-        GridLine cut;
-        uint32_t area;
-        uint32_t index;
+        std::vector<GridLine> cuts;
+        int area;
+        std::vector<int> index;
         GridOrientation orientation;
     };
 
     struct GridSplits {
-        std::vector<GridSplit> x;
-        std::vector<GridSplit> y;
+        GridSplit x;
+        GridSplit y;
 
-        std::vector<GridSplit>& operator[](GridOrientation orientation){
+        GridSplit& operator[](GridOrientation orientation){
             if (orientation == GridOrientation::X)
                 return x;
             return y;
@@ -55,12 +56,16 @@ namespace mvbb{
     };
 
     struct ProjectedSplit{
-        ProjectedLine cut;
+        std::vector<ProjectedLine> cuts;
         Vector2f origin;
         double area;
         GridOrientation orientation;
-        ProjectedSplit(ProjectedLine _line, Vector2f _origin, double _area, GridOrientation _orientation) : cut(_line), origin(_origin), area(_area), orientation(_orientation){};
-        ProjectedSplit() : cut({}), origin(), area() {};
+        ProjectedSplit(ProjectedLine _line, Vector2f _origin, double _area, GridOrientation _orientation) : cuts({_line}), origin(_origin), area(_area), orientation(_orientation){};
+        ProjectedSplit(std::vector<ProjectedLine> _lines, Vector2f _origin, double _area, GridOrientation _orientation) : cuts(_lines), origin(_origin), area(_area), orientation(_orientation){};
+        ProjectedSplit() : cuts({}), origin(), area() {};
+
+        using CutListSorted = std::vector<Plane_3>;
+        const CutListSorted project_cuts_and_create_planes(const CoordinateSystem2D& back_projection, std::filesystem::path debug_output_planes="");
     };
 
     const auto min_area  = [](const auto &a, const auto &b) {return a.area < b.area;};
@@ -98,6 +103,9 @@ namespace mvbb{
 
         Return_Best_Split superior_split();
     };
+
+    //void output_planes(const mvbb::TargetSetting &target_settings, int depth, int node_counter, ProjectedSplit &best_split,
+    //              const BoxFaces &selected_face, unknown coordinate_system2D);
 }
 
 

@@ -3,11 +3,12 @@
 //
 
 #include "BoxEntity.h"
+#include "TargetSetting.h"
 
 std::vector<FitAndSplitNode<pointcloud_xyzc>> BoxEntity::decompose(TargetSetting target_setting, SplitStrategy& split_strategy) {
     if(!last_setting.only_inferior_gain(target_setting)) {
         mvbb::CGAL_MVBB<pointcloud_xyzc> cgal_min_volume;
-        auto target = mvbb::TargetSetting(target_setting.kappa , target_setting.gain_threshold);
+        auto target = TargetSetting(target_setting.kappa , target_setting.gain_threshold);
         this->tree_hierarchy = mvbb::decompose3D(this->points, &cgal_min_volume, target, split_strategy);
         last_setting = target_setting;
         return this->tree_hierarchy.get_finalized();

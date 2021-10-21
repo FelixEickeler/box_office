@@ -3,6 +3,7 @@
 //
 #include <BoxScene.h>
 #include "gtest/gtest.h"
+#include "TargetSetting.h"
 
 
 TEST (Input , LoadPoints_XYZC_NoThrow) {
@@ -39,9 +40,35 @@ TEST (Input , Decompose3D_Bunny_NoThrow) {
    mvbb::CGAL_MVBB<boxy::pointcloud_xyzc> algo;
    auto epoints = entity.get_points();
    TwoSplitStrategy split_strategy;
-   mvbb::decompose3D(epoints, &algo, mvbb::TargetSetting(1, 0.99), split_strategy);
+   auto target_setting = TargetSetting(2, 0.99,10,1000,"/home/boxy/dev/debug/bunny_test");
+   spdlog::set_level(spdlog::level::trace);
+
+//   target_setting.output_grids=true;
+//   target_setting.output_cuts=true;
+//   target_setting.output_boxes=true;
+   mvbb::decompose3D(epoints, &algo, target_setting, split_strategy);
    ASSERT_NO_THROW();
 }
 
+TEST (Input /*test suite name*/, TakeFirstN_1to10_CorrectWords /*test name*/) {
+    auto test_string = "The red-bellied black snake (Pseudechis-porphyriacus) is a species of elapid snake native to Australia";
+    std::array<std::string, 14> result = {
+            "The", "red-bellied", "black", "snake", "(Pseudechis-porphyriacus)", "is", "a", "species", "of", "elapid",
+            "snake", "native", "to", "Australia"
+    };
+    {
+        using namespace helpers;
+        auto zero = take_first_n<0>(test_string, ' ');
+        ASSERT_EQ(zero.size(), 0);
+
+        auto first = take_first_n<1>(test_string, ' ');
+        ASSERT_EQ(first[0], "The");
+
+        auto fourteen = take_first_n<14>(test_string, ' ');
+        for (auto word = 0; word < fourteen.size(); ++word) {
+            ASSERT_EQ(fourteen[word], result[word]);
+        }
+    }
+}
 
 

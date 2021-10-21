@@ -18,6 +18,9 @@
 #include <CGAL/Origin.h>
 #include <filesystem>
 #include "FitAndSplitHierarchy.h"
+#include "SplitStrategies.h"
+#include "rasterizer_definitions.h"
+#include "TargetSetting.h"
 
 using namespace boxy;
 const bool direction_ex = false;
@@ -26,6 +29,7 @@ const bool direction_ey = true;
 
 namespace mvbb {
 
+
     template<class TPointCloudType>
     class Algo_Base {
     public:
@@ -33,7 +37,7 @@ namespace mvbb {
         using iterator = typename TPointCloudType::iterator;
 
         virtual BBox fit_bounding_box(
-                TPointCloudType &points3D) const = 0;  // This method is not implemented in the base class, making it a pure virtual method. Subclasses must implement it
+                const TPointCloudType &points3D) const = 0;  // This method is not implemented in the base class, making it a pure virtual method. Subclasses must implement it
     };
 
     template<class TPointCloudType>
@@ -41,11 +45,11 @@ namespace mvbb {
     public:
         ~CGAL_MVBB() = default;
 
-        BBox fit_bounding_box(TPointCloudType &points3D) const;
+        BBox fit_bounding_box(const TPointCloudType &points3D) const;
     };
 
     template<class TPointCloudType>
-    BBox CGAL_MVBB<TPointCloudType>::fit_bounding_box(TPointCloudType &points3D) const {
+    BBox CGAL_MVBB<TPointCloudType>::fit_bounding_box(const TPointCloudType &points3D) const {
         // TODO figure out how to generate pass the view to the oriented_bounding_box
         boxy::VectorView input(points3D.begin(), points3D.end());
         std::vector<Point> clean_points;
@@ -65,20 +69,6 @@ namespace mvbb {
         return BBox(vertices);
     }
 
-    struct TargetSetting {
-        const int kappa;
-        const float gain_threshold;
-        const int minimum_point_per_box;
-        const int minimal_initial_volume_divider;
-
-        TargetSetting(int kappa_, float gain_threshold_=0.99, int minimum_point_per_box_ = 10,
-                      int minimal_initial_volume_divider_ = 1000);
-        TargetSetting& operator= (const TargetSetting& f);
-
-        bool only_inferior_gain(TargetSetting& that) const;
-        bool operator==(TargetSetting& that) const;
-        bool operator!=(TargetSetting& that) const;
-    };
 
     using TPointCloudType = pointcloud_xyzc;
 

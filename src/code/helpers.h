@@ -15,9 +15,6 @@
 #include <CGAL/IO/write_off_points.h>
 #include <spdlog/spdlog.h>
 
-
-std::tuple<CGAL::Surface_mesh<boxy::Point>, std::array<boxy::Point,4>> Plane2Mesh(boxy::Point o1, boxy::Point p1, boxy::Point p2, bool swap_normal_direction=false);
-
 using namespace boxy;
 
 namespace  helpers {
