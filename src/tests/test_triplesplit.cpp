@@ -64,7 +64,7 @@ TEST (Algorithm_TripleSplit , CalculateBestSplits_TestPoints3x7_CorrectGRIDSplit
 TEST (Algorithm_TripleSplit , Decompose3D_Bunny_NoThrow) {
     auto eval = create_scene("./files/bunny_classy_head.txt",
                              "./files/bunny_classy_head.ol");
-    auto entity = eval.get_object(1);
+    auto entity = eval.get_object(0);
     mvbb::CGAL_MVBB<boxy::pointcloud_xyzc> algo;
     auto epoints = entity.get_points();
     TripleSplitStrategy split_strategy;

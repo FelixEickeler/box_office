@@ -52,17 +52,12 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
                 // ... rasterize !
 
                 auto raster = Discretization::create_discretization(split_strategy, bbox, coordinate_system2D, 512);
+                auto bad_counter = 0;
 
                 std::vector<Point2D> projected_2D;
                 for(auto& point : fas_node.points){
-//                    if(!bbox.is_inside(point)){
-//                        std::cout << "If this triggers this is bad\n";
-//                    }
                     auto proj = projection_plane.projection(std::get<0>(point)); //project to plane (3D)
                     auto point2d = coordinate_system2D.project_onto_plane(proj); //project to plane (2D) & new coordinate system
-                    if(point2d.x() < 0 && point2d.y() < 0){
-                        std::cout << "Debug CheckiThing\n";
-                    }
                     raster.insert(point2d);
                 }
 
@@ -122,7 +117,7 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
             auto calc_begin_of_next_point_partition = [fas_node](const Plane_3& next_cutting_plane, auto points_begin) {
                 return std::partition(points_begin, fas_node.points.end(),
                            [&next_cutting_plane](auto &point) {
-                               return next_cutting_plane.has_on_negative_side(std::get<0>(point));
+                               return !BBox::has_on_or_negative_side(next_cutting_plane, std::get<0>(point));
                            });
             };
 
@@ -159,9 +154,10 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
                 TPointCloudType this_bucket(left_bucket_boundary, right_bucket_boundary);
                 auto& proposed_bbox = proposed_boxes.emplace_back(bbox_algorithm->fit_bounding_box(this_bucket));
                 // check if the minimum volume is adhered otherwise finalize
-                if(bbox.volume() < initial_bbox.volume() / target_settings.minimal_initial_volume_divider){
+                if(bbox.volume() < initial_bbox.volume() / float(target_settings.minimal_initial_volume_divider)){
                     goto skip_rest_finalize_and_goto_next_node;
                 }
+                //spdlog::debug("Current_Volumne:{} => Points: {}", proposed_bbox.volume(), this_bucket.size());
                 proposed_volume += proposed_bbox.volume();
             }
 

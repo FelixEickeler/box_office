@@ -46,9 +46,6 @@ void mvbb::Discretization::insert(const Point2D &point2D) {
    auto point_grid = ((point2D - _shift).cwiseQuotient(_scale)).cast<uint32_t>();
    auto t = point_grid.x();
    auto t2 = point_grid.y();
-   if(t > 511 || t2 > 511){
-       std::cout << "testestest" << "\n";
-   }
     _grid.data(point_grid.y(), point_grid.x()) += 1;
 }
 

@@ -103,12 +103,18 @@ namespace boxy{
             std::array<Point , 8> vertices{};
 
         public:
+
             BBox(Point p1,Point p2,Point p3,Point p4,Point p5,Point p6,Point p7,Point p8) :
                     vertices({p1, p2, p3, p4, p5 , p6, p7, p8}) {}
 
             BBox(std::array<Point, 8> arr) : vertices(arr) {}
 
             BBox() = default;
+
+            const std::array<Plane_3, 8> face_enumerator() const{
+                return {get_plane(BoxFaces::A), get_plane(BoxFaces::B), get_plane(BoxFaces::C),
+                        get_plane(BoxFaces::D), get_plane(BoxFaces::E), get_plane(BoxFaces::F)};
+            }
 
             [[nodiscard]] std::array<Point, 8> get_vertices() const{
                 return vertices;
@@ -166,37 +172,36 @@ namespace boxy{
                 return abs(cross_product((vertices[1] - vertices[0]),(vertices[3] - vertices[0])) * (vertices[5] - vertices[0]));
             }
 
+            static inline bool has_on_or_negative_side(Plane_3 plane, Point point){
+                return static_cast<int>(plane.oriented_side(point)) <= 0;
+            }
+
             template<class TPointCloud>
             TPointCloud intersect(TPointCloud& points) const{
                 TPointCloud tmp;
-                std::array<Plane_3, 8> sides =  {get_plane(BoxFaces::A),    get_plane(BoxFaces::B), get_plane(BoxFaces::C),
-                                                 get_plane(BoxFaces::D),    get_plane(BoxFaces::E), get_plane(BoxFaces::F)};
-
-                for(auto& point : points){
-                    for(auto& plane : sides){
-                        if(plane.has_on_positive_side(std::get<0>(point))){
-                            goto skip_point;
-                        }
-                    }
-                    tmp.push_back(point);
-                    skip_point:;
-                }
+                auto sides = face_enumerator();
+                std::copy_if(points.begin(),  points.end(), std::back_inserter(tmp),
+                             [sides](auto point){
+                                return !std::any_of(sides.begin(), sides.end(),
+                                [point](auto& plane){
+                                    return has_on_or_negative_side(plane, std::get<0>(point));
+                                });});
                 return tmp;
             }
 
         template<class PointType>
         bool is_inside(PointType point) const{
-            std::array<Plane_3, 8> sides =  {get_plane(BoxFaces::A),    get_plane(BoxFaces::B), get_plane(BoxFaces::C),
-                                             get_plane(BoxFaces::D),    get_plane(BoxFaces::E), get_plane(BoxFaces::F)};
+            auto sides =  face_enumerator();
+            return std::any_of(sides.begin(), sides.end(), [point](auto& plane){
+                return has_on_or_negative_side(plane, std::get<0>(point));
+            });
+        };
 
-            return !std::any_of(sides.begin(), sides.end(),
-                        [point](auto& plane){return plane.has_on_positive_side(std::get<0>(point));});
-        }
-
-        bool is_inside(Point point) const{
-            std::array<Plane_3, 8> sides =  {get_plane(BoxFaces::A),    get_plane(BoxFaces::B), get_plane(BoxFaces::C),
-                                             get_plane(BoxFaces::D),    get_plane(BoxFaces::E), get_plane(BoxFaces::F)};
-            return !std::any_of(sides.begin(), sides.end(), [point](auto& plane){return plane.has_on_positive_side(point);});
+        bool is_inside(Point point) const {
+            auto sides = face_enumerator();
+            return std::any_of(sides.begin(), sides.end(), [point](auto& plane){
+                return has_on_or_negative_side(plane, point);
+            });
         }
 
     };
