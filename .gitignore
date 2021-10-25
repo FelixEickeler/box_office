@@ -15,3 +15,4 @@ data/
 _build
 build
 pybin_bin
+src/tests/files/blender
