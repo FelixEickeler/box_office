@@ -25,7 +25,7 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
     tree.emplace_back(0, initial_bbox, points3D.begin(), points3D.end());
     Path result_postfix;
 
-    for(auto depth=0; depth< target_settings.kappa; ++depth){
+    for(auto depth=0; depth < target_settings.kappa; ++depth){
         int node_counter = 0;
         if(tree.depth() <= depth) break;
         auto current_hierarchy_volume = tree.current_hierarchy_volume();
@@ -63,9 +63,22 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
 
                #ifdef PRODUCTION
                 if(target_settings.output_grids){
-                    result_postfix =fmt::format("node={}-face={}", std::to_string(node_counter), std::to_string(face));
+                    result_postfix =fmt::format("depth={}-node={}-face={}", depth, std::to_string(node_counter), std::to_string(face));
                     result_writer->set_path_addendum(result_postfix);
                     result_writer->write(ResultType::Grid(), raster, coordinate_system2D);
+                }
+
+                if(target_settings.output_cuts) {
+                    result_postfix = fmt::format("depth={}-node={}-face={}-orientation={}", std::to_string(depth),
+                                                 node_counter, face, "X");
+                    result_writer->set_path_addendum(result_postfix);
+                    result_writer->write(ResultType::Plane(), raster.best_splits().x.front(), coordinate_system2D);
+
+                    result_postfix = fmt::format("depth={}-node={}-face={}-orientation={}", std::to_string(depth),
+                                                 node_counter, face, "Y");
+                    result_writer->set_path_addendum(result_postfix);
+                    result_writer->write(ResultType::Plane(), raster.best_splits().y.front(), coordinate_system2D);
+
                 }
                #endif
 
@@ -95,8 +108,6 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
             }
             // select_best_split & get the face its on
             auto [best_split, selected_face] = best_bbox_splits.superior_split();
-
-
             // reinstate the PlaneCoordinate System
             auto coordinate_system2D = bbox.get_plane_coordinates2D(selected_face);
             // planes ordered from 0 -> raster
@@ -104,7 +115,7 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
 
             #ifdef PRODUCTION
             if(target_settings.output_cuts) {
-                result_postfix = fmt::format("depth={}-node={}-face={}", std::to_string(depth),
+                result_postfix = fmt::format("depth={}-node={}-face={}_chosen_cut", std::to_string(depth),
                                              node_counter, static_cast<int>(selected_face));
                 result_writer->set_path_addendum(result_postfix);
                 result_writer->write(ResultType::Plane(), best_split, coordinate_system2D);
@@ -134,7 +145,7 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
             for(const auto& next_cutting_plane : cutting_planes){
                 bucket_boundaries.push_back(calc_begin_of_next_point_partition(next_cutting_plane, bucket_boundaries[bucket_boundaries.size()-1]));
                 auto points_in_this_bucket = bucket_sizes.emplace_back(std::distance(bucket_boundaries[bucket_boundaries.size()-2], bucket_boundaries.back()));
-                if(points_in_this_bucket > target_settings.minimum_point_per_box){
+                if(points_in_this_bucket < target_settings.minimum_point_per_box){
                     low_point_number = true;
                 }
             }
@@ -145,6 +156,10 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
                 [](const std::string& a, int size){
                     return a + ", " + std::to_string(size);
                 });
+            if(low_point_number || bucket_sizes.front() < target_settings.minimum_point_per_box
+                                || bucket_sizes.back() < target_settings.minimum_point_per_box){
+                goto skip_rest_finalize_and_goto_next_node;
+            }
 
             //... of if the volume is too low ...
             for(auto right_bucket_boundary_idx=1; right_bucket_boundary_idx < bucket_boundaries.size(); ++right_bucket_boundary_idx) {
@@ -171,14 +186,15 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
                     tree.emplace_back(dive, proposed_boxes[pbox_idx], left_bucket_boundary, right_bucket_boundary);
                 }
             }
+            else{
+                goto skip_rest_finalize_and_goto_next_node;
+            }
 
             // node was finalized before e.g. protector for dead end !
             if(fas_node.final){
                 skip_rest_finalize_and_goto_next_node:;
                 fas_node.final = true;
             }
-
-
             spdlog::trace("Box: {0}\t Points: {1}\t=>{2}\t| gain: {3}\t | status: {4}", node_counter, fas_node.points.size(), bucket_stats_string, gain, fas_node.final ? "rejected" : "accepted");
             node_counter++;
         }
@@ -188,6 +204,16 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
     for(auto& node : tree.max_depth()){
         node.final = true;
     }
+    #ifdef PRODUCTION
+    if(target_settings.output_boxes) {
+        auto node_counter = 0;
+        for(auto& node : tree.get_finalized()){
+            result_postfix = fmt::format("depth={}-node={}", std::to_string(tree.node_depth(node)), node_counter++);
+            result_writer->set_path_addendum(result_postfix);
+            result_writer->write(ResultType::BoundingBox(), node.bounding_box, node.final);
+        }
+    }
+    #endif
 
 
     spdlog::debug("Decomposition took: {} seconds. Final hierarchy volume:\t {}", sw, tree.current_hierarchy_volume() / initial_bbox.volume());

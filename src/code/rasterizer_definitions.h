@@ -59,9 +59,10 @@ namespace mvbb{
         std::vector<ProjectedLine> cuts;
         Vector2f origin;
         double area;
+        double normalized_volume;
         GridOrientation orientation;
-        ProjectedSplit(ProjectedLine _line, Vector2f _origin, double _area, GridOrientation _orientation) : cuts({_line}), origin(_origin), area(_area), orientation(_orientation){};
-        ProjectedSplit(std::vector<ProjectedLine> _lines, Vector2f _origin, double _area, GridOrientation _orientation) : cuts(_lines), origin(_origin), area(_area), orientation(_orientation){};
+        ProjectedSplit(ProjectedLine _line, Vector2f _origin, double _area, double _normalized_volume, GridOrientation _orientation) : cuts({_line}), origin(_origin), area(_area), normalized_volume(_normalized_volume), orientation(_orientation){};
+        ProjectedSplit(std::vector<ProjectedLine> _lines, Vector2f _origin, double _area, double _normalized_volume, GridOrientation _orientation) : cuts(_lines), origin(_origin), area(_area), normalized_volume(_normalized_volume), orientation(_orientation){};
         ProjectedSplit() : cuts({}), origin(), area() {};
 
         using CutListSorted = std::vector<Plane_3>;

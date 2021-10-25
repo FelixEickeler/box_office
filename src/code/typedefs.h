@@ -232,6 +232,10 @@ namespace boxy{
         [[nodiscard]] size_t size() const{
             return std::distance(_begin, _end);
         }
+
+        bool operator==(const VectorView<TIterator>& that) const{
+            return _begin == that._begin && _end == that._end;
+        }
     };
 
     template <typename E>

@@ -60,7 +60,7 @@ mvbb::BoxSplits::Return_Best_Split mvbb::BoxSplits::superior_split() {
         auto best_y = split_on_face.best_y();
         auto best_both = min_area(*best_x, *best_y) ? best_x : best_y;
 
-        if (bsr.best_split.area > best_both->area) {
+        if (bsr.best_split.normalized_volume > best_both->normalized_volume) {
             bsr.best_split = *best_both;
             bsr.on_face = face;
         }

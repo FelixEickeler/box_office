@@ -20,6 +20,10 @@ struct FitAndSplitNode {
     Tpointcloud get_points() const{
         return Tpointcloud(points.begin(), points.end());
     }
+
+    bool operator==(const FitAndSplitNode<Tpointcloud>& that) const{
+        return this->points == that.points;
+    }
 };
 
 template<class TPointCloud>
@@ -47,6 +51,17 @@ class FitAndSplitHierarchy {
 
         auto &max_depth() {
             return nodes.back();
+        }
+
+        auto node_depth(FitAndSplitNode<TPointCloud> node){
+            auto k = 0;
+            for (auto& level : nodes){
+                if(std::find(begin(level), end(level), node) != end(level)){
+                    break;
+                }
+                ++k;
+            }
+            return k;
         }
 
         std::vector<FitAndSplitNode<TPointCloud>> get_finalized(int node_level = -1){

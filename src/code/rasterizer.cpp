@@ -82,7 +82,7 @@ mvbb::ProjectedSplits mvbb::Discretization::best_splits()  const{
     ProjectedSplits projected_splits;
     // calculate all the splits with the given strategy
     auto best_grid_splits = _split_strategy.calculate_best_splits(_grid);
-    double cell_area = step_x() * step_y();
+    double cell_area = 1;//step_x() * step_y();
     Vector2f origin = grid2space(Point2D(0, 0));
 
    for(const auto& orientation : GridOrientationEnumerator){
@@ -91,6 +91,7 @@ mvbb::ProjectedSplits mvbb::Discretization::best_splits()  const{
                    grid2space(os.cuts),
                    origin,
                    os.area * cell_area,
+                   os.area,
                    os.orientation);
 
    }

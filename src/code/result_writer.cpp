@@ -26,7 +26,7 @@ bool ResultWriterFs::write(ResultType::Plane plane, const ProjectedSplit &best_s
         auto[plane_mesh, plane_system] = Plane2Mesh(o1, p1, p2, best_split.orientation == Y);
 
         // write final plane to .off
-        auto plane_path = base_path / "cutting_planes" / (std::to_string(cut_counter++) +"_" + this->addendum.string());
+        auto plane_path = base_path / "cutting_planes" /  (this->addendum.string() + "cut=_" + (std::to_string(cut_counter++) +".off"));
         create_directories(plane_path.parent_path());
         if (!CGAL::IO::write_OFF(plane_path, plane_mesh, CGAL::parameters::stream_precision(6))) {
             std::cout << "The number of vertices is: " << plane_mesh.vertices().size() << "\n";

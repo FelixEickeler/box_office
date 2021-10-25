@@ -68,12 +68,28 @@ TEST (Algorithm_TripleSplit , Decompose3D_Bunny_NoThrow) {
     mvbb::CGAL_MVBB<boxy::pointcloud_xyzc> algo;
     auto epoints = entity.get_points();
     TripleSplitStrategy split_strategy;
-    auto target_setting = TargetSetting(2, 0.99,10,1000,"/home/boxy/dev/debug/bunny_tripple_test");
+    auto target_setting = TargetSetting(16, 0.995,10,1000,"/home/boxy/dev/debug/bunny_tripple_test");
     spdlog::set_level(spdlog::level::trace);
     target_setting.output_grids=true;
     target_setting.output_cuts=true;
     target_setting.output_boxes=true;
 
+    mvbb::decompose3D(epoints, &algo, target_setting, split_strategy);
+    ASSERT_NO_THROW();
+}
+
+TEST (Algorithm_TripleSplit , Decompose3D_424_NoThrow) {
+    auto eval = create_scene("./files/424.txt",
+                             "./files/boxes.ol");
+    auto entity = eval.get_object(0);
+    mvbb::CGAL_MVBB<boxy::pointcloud_xyzc> algo;
+    auto epoints = entity.get_points();
+    TripleSplitStrategy split_strategy;
+    auto target_setting = TargetSetting(2, 0.99,10,1000,"/home/boxy/dev/debug/424");
+    spdlog::set_level(spdlog::level::trace);
+    target_setting.output_grids=true;
+    target_setting.output_cuts=true;
+    target_setting.output_boxes=true;
     mvbb::decompose3D(epoints, &algo, target_setting, split_strategy);
     ASSERT_NO_THROW();
 }
