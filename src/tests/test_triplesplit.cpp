@@ -85,7 +85,7 @@ TEST (Algorithm_TripleSplit , Decompose3D_424_NoThrow) {
     mvbb::CGAL_MVBB<boxy::pointcloud_xyzc> algo;
     auto epoints = entity.get_points();
     TripleSplitStrategy split_strategy;
-    auto target_setting = TargetSetting(2, 0.99,10,1000,"/home/boxy/dev/debug/424");
+    auto target_setting = TargetSetting(2, 0.99,20,1000,"/home/boxy/dev/debug/404");
     spdlog::set_level(spdlog::level::trace);
     target_setting.output_grids=true;
     target_setting.output_cuts=true;

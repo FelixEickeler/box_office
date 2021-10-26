@@ -213,29 +213,28 @@ namespace boxy{
 
     template<typename TIterator>
     class VectorView{
-//        using constit = typename T::const_iterator;
         TIterator _begin;
         TIterator _end;
 
         public:
             VectorView(TIterator begin, TIterator end)  : _begin(begin), _end(end){}
 //            VectorView()= default;
-        TIterator begin() {return _begin; }
-        TIterator end() {return _end;}
-//        using const_iterator = typename std::iterator_traits<TIterator>::const_iterator;
-        TIterator begin() const { return _begin; }
-        TIterator end()   const { return _end; }
-        TIterator cbegin() const { return _begin; }
-        TIterator cend()   const { return _end; }
+            TIterator begin() {return _begin; }
+            TIterator end() {return _end;}
+    //        using const_iterator = typename std::iterator_traits<TIterator>::const_iterator;
+            TIterator begin() const { return _begin; }
+            TIterator end()   const { return _end; }
+            TIterator cbegin() const { return _begin; }
+            TIterator cend()   const { return _end; }
 
-        typename std::iterator_traits<TIterator>::reference operator[](std::size_t index) { return _begin[index]; }
-        [[nodiscard]] size_t size() const{
-            return std::distance(_begin, _end);
-        }
+            typename std::iterator_traits<TIterator>::reference operator[](std::size_t index) { return _begin[index]; }
+            [[nodiscard]] size_t size() const{
+                return std::distance(_begin, _end);
+            }
 
-        bool operator==(const VectorView<TIterator>& that) const{
-            return _begin == that._begin && _end == that._end;
-        }
+            bool operator==(const VectorView<TIterator>& that) const{
+                return _begin == that._begin && _end == that._end;
+            }
     };
 
     template <typename E>

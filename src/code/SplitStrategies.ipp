@@ -87,10 +87,9 @@ GridSplit TripleSplitStrategy::_calculate_best_split(const XY_Grid &grid) {
                     + calculate_box_height(box2) * (fast-slow)
                     + calculate_box_height(box3) * (slot_sizes.cols()-fast);
 
-            if (area < _min_area) {
+            if (area < _min_area || (area == _min_area && (fast-slow) < (idx_min_area[1] - idx_min_area[0]))) {
                 _min_area = area;
                 idx_min_area = {slow, fast};
-
             }
         }
     }

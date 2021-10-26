@@ -29,7 +29,8 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
         int node_counter = 0;
         if(tree.depth() <= depth) break;
         auto current_hierarchy_volume = tree.current_hierarchy_volume();
-        spdlog::debug("Decomposing level: {0} with {1} max gain and a hierarchy volume {2}", depth, target_settings.gain_threshold, current_hierarchy_volume / initial_bbox.volume());
+        spdlog::info("Decomposing level: {0} with {1} max gain and a hierarchy volume {2}",
+                     depth, target_settings.gain_threshold, current_hierarchy_volume / initial_bbox.volume());
 
         for(auto& fas_node : tree.getNodes(depth)) {   //std::for_each(all_parents.begin(), all_parents.end(), [&tree, bbox_algorithm, depth, &node_counter](auto& fas_node){
             #ifdef PRODUCTION
@@ -195,7 +196,10 @@ FitAndSplitHierarchy<TPointCloudType> mvbb::decompose3D(TPointCloudType &points3
                 skip_rest_finalize_and_goto_next_node:;
                 fas_node.final = true;
             }
-            spdlog::trace("Box: {0}\t Points: {1}\t=>{2}\t| gain: {3}\t | status: {4}", node_counter, fas_node.points.size(), bucket_stats_string, gain, fas_node.final ? "rejected" : "accepted");
+            spdlog::info("Box: {}\t Points: {}\t=>{:<{}}\t| gain: {}\t | status: {}", node_counter,
+                         fas_node.points.size(), bucket_stats_string, 25,
+                         gain > 0 ? std::to_string(gain) : "   NAN    ",
+                         fas_node.final ? "rejected" : "accepted");
             node_counter++;
         }
     }
