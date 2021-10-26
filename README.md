@@ -72,13 +72,9 @@ Do not forget to shutdown the docker after use with docker-compose down
 
 ![img.png](img.png)
 ## TODOS:
-* write tests (c++) 
-    * improve data loading     
+* write tests (c++)   
 * make example in pyhton 
 * loader and dataprocessing tests in python ?!?
-* cgal work around (memory leak)
-* clean up cmake + install
-* ADD LICENSE
 
 ##License
     Copyright (c) 2021 Felix Eickeler, Florian Noichl

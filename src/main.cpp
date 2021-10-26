@@ -39,9 +39,35 @@ PYBIND11_MODULE(BoxOffice, module_handle) {
             .def_property_readonly("gain_threshold", [](TargetSetting &self){ return self.gain_threshold;})
             .def_property_readonly("minimum_point_per_box", [](TargetSetting &self){ return self.minimum_point_per_box;})
             .def_property_readonly("minimal_initial_volume_divider", [](TargetSetting &self){ return self.minimal_initial_volume_divider;})
-            .def_property_readonly("output_cutting_plane_path", [](TargetSetting &self){ return self.output_cutting_plane_path;});
+            .def_property("output_planes",
+                          [](TargetSetting &self){ return self.output_planes;},
+                          [](TargetSetting &self, bool value){ self.output_planes = value;}
+            )
+            .def_property("output_grids",
+                          [](TargetSetting &self){ return self.output_grids;},
+                          [](TargetSetting &self, bool value){ self.output_grids = value;}
+            )
+            .def_property("output_cuts",
+                          [](TargetSetting &self){ return self.output_cuts;},
+                          [](TargetSetting &self, bool value){ self.output_cuts = value;}
+            )
+            .def_property("output_boxes",
+                          [](TargetSetting &self){ return self.output_boxes;},
+                          [](TargetSetting &self, bool value){ self.output_boxes = value;}
+            )
+            .def_property("subdivide",
+                          [](TargetSetting &self){ return self.subdivide;},
+                          [](TargetSetting &self, bool value){ self.subdivide = value;}
+            )
+            .def_property("base_path",
+                          [](TargetSetting &self){ return self.base_path;},
+                          [](TargetSetting &self, const std::string &base_path_){ self.base_path = Path(base_path_);}
+            );
 
-    py::class_<TwoSplitStrategy>(module_handle, "TwoSplitAlgorithm")
+    py::class_<TwoSplitStrategy>(module_handle, "TwoSplitStrategy")
+            .def(py::init<>());
+
+    py::class_<TripleSplitStrategy>(module_handle, "TripleSplitStrategy")
             .def(py::init<>());
 
     py::class_<BBox>(module_handle, "BoundingBox")
@@ -52,6 +78,10 @@ PYBIND11_MODULE(BoxOffice, module_handle) {
             .def("volume", &BBox::volume)
             .def("intersect", [](const BBox &self, BoxScene &scene) {
                 return self.intersect<pointcloud_xyzc>(scene.get_pointcloud());
+            })
+            .def("is_inside", [](const BBox &self, const py::array &np31_point) {
+                auto point = helpers::numpy31_2_point(np31_point);
+                return self.is_inside(point);
             });
 
     using _node = FitAndSplitNode<pointcloud_xyzc>;
