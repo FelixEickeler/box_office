@@ -10,7 +10,7 @@ struct TargetSetting {
     const float gain_threshold;
     const int minimum_point_per_box;
     const int minimal_initial_volume_divider;
-    const std::filesystem::path base_path;
+    std::filesystem::path base_path;
     bool subdivide = false;
     bool output_planes = false;
     bool output_grids = false;

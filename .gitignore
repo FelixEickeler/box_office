@@ -16,3 +16,4 @@ _build
 build
 pybin_bin
 src/tests/files/blender
+src/__build

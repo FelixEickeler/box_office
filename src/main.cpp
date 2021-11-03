@@ -4,7 +4,7 @@
 #include <pybind11/numpy.h>
 #include "code/mvbb_algorithms.h"
 #include "code/pybind_helpers.h"
-#include "TargetSetting.h"
+#include "code/TargetSetting.h"
 
 namespace py = pybind11;
 
