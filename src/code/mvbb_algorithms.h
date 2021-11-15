@@ -18,6 +18,9 @@
 #include <CGAL/Origin.h>
 #include <filesystem>
 #include "FitAndSplitHierarchy.h"
+#include "SplitStrategies.h"
+#include "rasterizer_definitions.h"
+#include "TargetSetting.h"
 
 using namespace boxy;
 const bool direction_ex = false;
@@ -26,36 +29,38 @@ const bool direction_ey = true;
 
 namespace mvbb {
 
+
     template<class TPointCloudType>
     class Algo_Base {
-        public:
-            virtual ~Algo_Base() {};
-            using iterator = typename TPointCloudType::iterator;
+    public:
+        virtual ~Algo_Base() {};
+        using iterator = typename TPointCloudType::iterator;
 
-            virtual BBox fit_bounding_box(
-                    TPointCloudType &points3D) const = 0;  // This method is not implemented in the base class, making it a pure virtual method. Subclasses must implement it
+        virtual BBox fit_bounding_box(
+                const TPointCloudType &points3D) const = 0;  // This method is not implemented in the base class, making it a pure virtual method. Subclasses must implement it
     };
 
     template<class TPointCloudType>
     class CGAL_MVBB : public Algo_Base<TPointCloudType> {
-        public:
-            ~CGAL_MVBB() = default;
+    public:
+        ~CGAL_MVBB() = default;
 
-            BBox fit_bounding_box(TPointCloudType &points3D) const;
+        BBox fit_bounding_box(const TPointCloudType &points3D) const;
     };
 
     template<class TPointCloudType>
-    BBox CGAL_MVBB<TPointCloudType>::fit_bounding_box(TPointCloudType &points3D) const {
+    BBox CGAL_MVBB<TPointCloudType>::fit_bounding_box(const TPointCloudType &points3D) const {
         // TODO figure out how to generate pass the view to the oriented_bounding_box
         boxy::VectorView input(points3D.begin(), points3D.end());
         std::vector<Point> clean_points;
-        for(auto& p : points3D){
+        for (auto &p: points3D) {
             clean_points.push_back(std::get<0>(p));
         }
         std::array<Point, 8> vertices;
         if (points3D.size() > 10) {
             try {
-                CGAL::oriented_bounding_box(clean_points, vertices);//, CGAL::parameters::point_map(boxy::Point_map())); //CGAL::parameters::use_convex_hull(true).
+                CGAL::oriented_bounding_box(clean_points,
+                                            vertices);//, CGAL::parameters::point_map(boxy::Point_map())); //CGAL::parameters::use_convex_hull(true).
             }
             catch (std::exception &e) {
                 std::cout << e.what() << '\n';
@@ -64,9 +69,11 @@ namespace mvbb {
         return BBox(vertices);
     }
 
+
     using TPointCloudType = pointcloud_xyzc;
-    FitAndSplitHierarchy<TPointCloudType> decompose3D(TPointCloudType &points3D, Algo_Base<TPointCloudType> *bbox_algorithm,
-                                                      uint32_t kappa, float gain_threshold = 0.99);
+
+    FitAndSplitHierarchy<TPointCloudType>
+    decompose3D(TPointCloudType &points3D, Algo_Base<TPointCloudType> *bbox_algorithm, TargetSetting target_settings, SplitStrategy& split_strategy);
 
 }
 #endif

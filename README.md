@@ -24,7 +24,11 @@ These functions are avaiable after importing the BoxOffice into python:
 <img src="/docs/python_interface.png" height="400">
 
 ## How to get started:
-- start the __docker__ as daemon (see below)
+- Clone this repository and pull the submodules used:
+  ```
+  git submodule update --init --recursive
+  ```
+- Start the __docker__ as daemon (see below)
 - __recompile | update the c++ library__ and update in python directory
   - open a comandline of your choice in the ./docker directory
   - open a bash into the docker
@@ -68,11 +72,29 @@ Do not forget to shutdown the docker after use with docker-compose down
 
 ![img.png](img.png)
 ## TODOS:
-* write tests (c++) 
-    * improve data loading     
+* write tests (c++)   
 * make example in pyhton 
 * loader and dataprocessing tests in python ?!?
-* cgal work around (memory leak)
-* clean up cmake + install
- 
+
+##License
+    Copyright (c) 2021 Felix Eickeler, Florian Noichl
+    see ./LICENSE
+
+###Third party software 
+    google test
+    Copyright 2008, Google Inc.
+    License: see ./modules/googletest
+
+    pybind11
+    Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>
+    License:  see ./modules/pybind11
+
+    spdlog
+    Copyright (c) 2016 Gabi Melman.
+    License: MIT
+
+    static_enum
+    Copyright (c) 2019 konanM
+    License: MIT
+
 
