@@ -27,7 +27,7 @@ bool TargetSetting::operator!=(TargetSetting& that) const {
 }
 
 bool TargetSetting::only_inferior_gain(TargetSetting &that) const {
-    return kappa <= that.kappa && all_other_equal(that);
+    return that.kappa <= kappa && all_other_equal(that);
 }
 
 TargetSetting &TargetSetting::operator=(const TargetSetting &f) {

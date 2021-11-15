@@ -64,10 +64,12 @@ PYBIND11_MODULE(BoxOffice, module_handle) {
                           [](TargetSetting &self, const std::string &base_path_){ self.base_path = Path(base_path_);}
             );
 
-    py::class_<TwoSplitStrategy>(module_handle, "TwoSplitStrategy")
+	py::class_<SplitStrategy>(module_handle, "SplitStrategy");
+			
+    py::class_<TwoSplitStrategy, SplitStrategy>(module_handle, "TwoSplitStrategy")
             .def(py::init<>());
 
-    py::class_<TripleSplitStrategy>(module_handle, "TripleSplitStrategy")
+    py::class_<TripleSplitStrategy, SplitStrategy>(module_handle, "TripleSplitStrategy")
             .def(py::init<>());
 
     py::class_<BBox>(module_handle, "BoundingBox")
