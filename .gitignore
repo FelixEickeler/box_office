@@ -5,6 +5,16 @@ src/cmake-build-release/
 src/pybin_bin
 src/.idea
 src/_build
+
+**/CMakeFiles
+**/CMakeCache.txt
+**/Makefile
+**/cmake_install.cmake
+**/CTestTestfile.cmake
+src/code/BoxOffice.cpython*
+src/code/libBoxOffice_lib.a
+src/tests/BoxOffice_testing
+
 #modules/wrapper_cgal
 #modules/pybind11
 #modules/sp
