@@ -15,9 +15,6 @@ src/code/BoxOffice.cpython*
 src/code/libBoxOffice_lib.a
 src/tests/BoxOffice_testing
 
-#modules/wrapper_cgal
-#modules/pybind11
-#modules/sp
 .idea
 __pychache__
 python/*.so
@@ -27,3 +24,5 @@ build
 pybin_bin
 src/tests/files/blender
 src/__build
+
+docker/docker-compose.yml
